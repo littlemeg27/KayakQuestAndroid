@@ -38,7 +38,7 @@ android {
     }
 
     kotlinOptions {
-        jvmTarget = "17"  // Fixed previously
+        jvmTarget = "17"
     }
 
     buildFeatures {
@@ -69,6 +69,10 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
+    implementation(libs.androidx.navigation.fragment.ktx)
+    implementation(libs.firebase.common.ktx)
+    implementation(libs.com.google.firebase.firebase.auth.ktx)
+    implementation(libs.com.google.firebase.firebase.storage.ktx)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
 
@@ -98,4 +102,32 @@ dependencies {
     implementation(libs.maps.compose)
     implementation(libs.play.services.maps)
     implementation(libs.play.services.location)
+
+    // Core Compose
+    implementation(libs.ui)
+    implementation(libs.material3)
+    implementation(libs.ui.tooling.preview)
+    implementation(libs.androidx.activity.compose)
+
+    // Navigation Compose
+    implementation(libs.androidx.navigation.compose.v277)
+
+    // Lifecycle for ViewModels in Compose
+    implementation(libs.androidx.lifecycle.viewmodel.compose.v284)
+
+    // Google Maps Compose (for MapFragment)
+    implementation(libs.maps.compose.v612)
+    implementation(libs.play.services.maps.v1820)
+
+    // Retrofit and Gson (assuming from WeatherApiService)
+    implementation(libs.retrofit.v2110)
+    implementation(libs.converter.gson.v2110)
+
+    // Other existing deps like Firebase, etc.
+    debugImplementation(libs.ui.tooling)
+    implementation(libs.androidx.compose.runtime.livedata)
+    implementation(libs.androidx.lifecycle.viewmodel.compose.v286)
+    implementation(libs.retrofit)
+    implementation(libs.retrofit.converter.gson)
+    implementation(libs.play.services.maps)
 }

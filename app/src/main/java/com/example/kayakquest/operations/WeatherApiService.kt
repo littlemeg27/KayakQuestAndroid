@@ -1,8 +1,8 @@
-package com.example.kayakquest.data
+package com.example.kayakquest.operations
 
+import retrofit2.Response
 import retrofit2.http.GET
 import retrofit2.http.Query
-import retrofit2.Response
 
 interface WeatherApiService
 {

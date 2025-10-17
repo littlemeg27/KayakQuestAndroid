@@ -1,4 +1,4 @@
-package com.example.kayakquest.data
+package com.example.kayakquest.operations
 
 data class FloatPlan(
     var kayakerName: String = "",
@@ -27,12 +27,32 @@ data class FloatPlan(
     var tripNotes: String = "",
     var userId: String = "",
     var pdfUrl: String? = null
-)
-{
+) {
     fun toMap(): Map<String, Any?> = mapOf(
         "kayakerName" to kayakerName,
         "gender" to gender,
-        // ... all fields
-        "pdfUrl" to pdfUrl
+        "age" to age,
+        "address" to address,
+        "city" to city,
+        "state" to state,
+        "emergencyContact" to emergencyContact,
+        "emergencyPhone" to emergencyPhone,
+        "kayakMake" to kayakMake,
+        "kayakModel" to kayakModel,
+        "kayakLength" to kayakLength,
+        "kayakColor" to kayakColor,
+        "vehicleModel" to vehicleModel,
+        "plateNumber" to plateNumber,
+        "safetyEquipmentNotes" to safetyEquipmentNotes,
+        "vehicleMake" to vehicleMake,
+        "vehicleColor" to vehicleColor,
+        "departureDate" to departureDate,
+        "departureTime" to departureTime,
+        "putInLocation" to putInLocation,
+        "takeOutLocation" to takeOutLocation,
+        "returnTime" to returnTime,
+        "tripNotes" to tripNotes,
+        "userId" to userId,
+        "pdfUrl" to pdfUrl,
     )
 }
