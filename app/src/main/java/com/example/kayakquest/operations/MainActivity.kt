@@ -1,3 +1,5 @@
+package com.example.kayakquest.operations
+
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
@@ -21,9 +23,6 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.kayakquest.R
 import com.google.firebase.FirebaseApp
-
-// Import or define these screens in separate files or below
-// For now, placeholders are added at the bottom; replace with actual implementations
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -80,45 +79,45 @@ fun KayakQuestApp() {
             startDestination = Screen.SignIn.route,
             modifier = Modifier.padding(innerPadding)
         ) {
-            composable(Screen.SignIn.route) { SignInScreen(navController) }
-            composable(Screen.Map.route) { MapScreen(navController) }
-            composable(Screen.FloatPlan.route) { FloatPlanScreen(navController) }
-            composable(Screen.Weather.route) { WeatherScreen(navController) }
-            composable(Screen.Settings.route) { SettingsScreen(navController) }
+            composable(Screen.SignIn.route) { SignInScreen() }
+            composable(Screen.Map.route) { MapScreen() }
+            composable(Screen.FloatPlan.route) { FloatPlanScreen() }
+            composable(Screen.Weather.route) { WeatherScreen() }
+            composable(Screen.Settings.route) { SettingsScreen() }
         }
     }
 }
 
 sealed class Screen(val route: String, val label: String, val icon: Int) {
-    data object SignIn : Screen("signIn", "Sign In", R.drawable.ic_sign_in)  // Ensure these drawables exist in res/drawable
+    data object SignIn : Screen("signIn", "Sign In", R.drawable.ic_sign_in)  // Ensure drawable/ic_sign_in.xml or .png exists in res
     data object Map : Screen("map", "Map", R.drawable.ic_map)
     data object FloatPlan : Screen("floatPlan", "Float Plan", R.drawable.ic_float_plan)
     data object Weather : Screen("weather", "Weather", R.drawable.ic_weather)
     data object Settings : Screen("settings", "Settings", R.drawable.ic_settings)
 }
 
-// Placeholder composables - Implement in separate files or expand here
+// Placeholder composables - Implement in separate files; removed unused navController param
 @Composable
-fun SignInScreen(navController: NavHostController) {
+fun SignInScreen() {
     Text("Sign In Screen")
 }
 
 @Composable
-fun MapScreen(navController: NavHostController) {
+fun MapScreen() {
     Text("Map Screen")
 }
 
 @Composable
-fun FloatPlanScreen(navController: NavHostController) {
+fun FloatPlanScreen() {
     Text("Float Plan Screen")
 }
 
 @Composable
-fun WeatherScreen(navController: NavHostController) {
+fun WeatherScreen() {
     Text("Weather Screen")
 }
 
 @Composable
-fun SettingsScreen(navController: NavHostController) {
+fun SettingsScreen() {
     Text("Settings Screen")
 }
