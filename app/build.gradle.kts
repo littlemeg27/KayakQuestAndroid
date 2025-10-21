@@ -1,7 +1,7 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
-    id("com.google.gms.google-services") version "4.4.2"  // Latest version; applies to this module for Firebase integration
+    id("com.google.gms.google-services") version "4.4.2"
 }
 
 android {
@@ -9,7 +9,7 @@ android {
     compileSdk = 36
 
     // Load local.properties (mirroring Java project)
-    val localProperties = Properties()
+    val localProperties = java.util.Properties()
     val localPropertiesFile = rootProject.file("local.properties")
     if (localPropertiesFile.exists()) {
         localProperties.load(localPropertiesFile.inputStream())
@@ -59,8 +59,10 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
-    kotlinOptions {
-        jvmTarget = "17"
+    kotlin {
+        compilerOptions {
+            jvmTarget = JavaVersion.VERSION_17
+        }
     }
 
     buildFeatures {
@@ -125,12 +127,12 @@ dependencies {
     implementation(libs.maps.compose)
     implementation(libs.play.services.maps)
     implementation(libs.play.services.location)
-    implementation(libs.play.services.auth)
+    implementation(libs.play.services.auth)  // Updated alias
 
-    // iText for PDF (from Java project)
+    // iText for PDF
     implementation(libs.itext)
 
-    // Tests
+    // Tests (updated aliases)
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
