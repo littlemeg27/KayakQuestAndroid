@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1032912162565",
+    "project_id": "kayakquest-2f46d",
+    "storage_bucket": "kayakquest-2f46d.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1032912162565:android:d81834d73b8a400e45716c",
+        "android_client_info": {
+          "package_name": "com.example.kayakquest"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBWJ_Khz3aX1C1o_SqUCOlmHNoZk9LDO0s"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

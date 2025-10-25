@@ -13,7 +13,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
@@ -21,7 +20,6 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.example.kayakquest.R
 import com.google.firebase.FirebaseApp
 
 class MainActivity : ComponentActivity() {
@@ -50,14 +48,17 @@ fun KayakQuestApp() {
     )
 
     Scaffold(
-        bottomBar = {
-            NavigationBar {
+        bottomBar =
+            {
+            NavigationBar
+                {
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
                 val currentDestination = navBackStackEntry?.destination
 
-                items.forEach { screen ->
+                items.forEach
+                { screen ->
                     NavigationBarItem(
-                        icon = { Icon(painterResource(id = screen.icon), contentDescription = screen.label) },
+                        icon = { Icon(screen.icon, contentDescription = screen.label) },
                         label = { Text(screen.label) },
                         selected = currentDestination?.hierarchy?.any { it.route == screen.route } == true,
                         onClick = {
@@ -88,36 +89,42 @@ fun KayakQuestApp() {
     }
 }
 
-sealed class Screen(val route: String, val label: String, val icon: Int) {
-    data object SignIn : Screen("signIn", "Sign In", R.drawable.ic_sign_in)  // Ensure drawable/ic_sign_in.xml or .png exists in res
-    data object Map : Screen("map", "Map", R.drawable.ic_map)
-    data object FloatPlan : Screen("floatPlan", "Float Plan", R.drawable.ic_float_plan)
-    data object Weather : Screen("weather", "Weather", R.drawable.ic_weather)
-    data object Settings : Screen("settings", "Settings", R.drawable.ic_settings)
+sealed class Screen(val route: String, val label: String, val icon: androidx.compose.ui.graphics.vector.ImageVector)
+{
+    data object SignIn : Screen("signIn", "Sign In", ic_signin.xml)
+    data object Map : Screen("map", "Map", ic_map.xml)
+    data object FloatPlan : Screen("floatPlan", "Float Plan", ic_float_plan.xml)
+    data object Weather : Screen("weather", "Weather", ic_weather.xml)
+    data object Settings : Screen("settings", "Settings", ic_settings.xml)
 }
 
 // Placeholder composables - Implement in separate files; removed unused navController param
 @Composable
-fun SignInScreen() {
+fun SignInScreen()
+{
     Text("Sign In Screen")
 }
 
 @Composable
-fun MapScreen() {
+fun MapScreen()
+{
     Text("Map Screen")
 }
 
 @Composable
-fun FloatPlanScreen() {
+fun FloatPlanScreen()
+{
     Text("Float Plan Screen")
 }
 
 @Composable
-fun WeatherScreen() {
+fun WeatherScreen()
+{
     Text("Weather Screen")
 }
 
 @Composable
-fun SettingsScreen() {
+fun SettingsScreen()
+{
     Text("Settings Screen")
 }

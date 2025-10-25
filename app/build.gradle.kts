@@ -1,14 +1,14 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
-    id("com.google.gms.google-services") version "4.4.2"
+    id("com.google.gms.google-services") version "4.4.4" apply false
+    id("com.android.application")
 }
 
 android {
     namespace = "com.example.kayakquest"
     compileSdk = 36
 
-    // Load local.properties (mirroring Java project)
     val localProperties = java.util.Properties()
     val localPropertiesFile = rootProject.file("local.properties")
     if (localPropertiesFile.exists()) {
@@ -80,60 +80,51 @@ android {
 }
 
 dependencies {
-    // Core Android/Kotlin
-    implementation(libs.androidx.core.ktx)
-    implementation(libs.androidx.appcompat)
-    implementation(libs.material)
-    implementation(libs.androidx.activity)
-    implementation(libs.androidx.constraintlayout)
-
-    // Compose
-    implementation(platform(libs.androidx.compose.bom.v20240903))
-    implementation(libs.androidx.ui)
-    implementation(libs.androidx.ui.graphics)
-    implementation(libs.androidx.ui.tooling.preview)
-    implementation(libs.androidx.material3)
-    implementation(libs.androidx.activity.compose)
-    debugImplementation(libs.androidx.ui.tooling)
-    debugImplementation(libs.androidx.ui.test.manifest)
-
-    // Navigation Compose
-    implementation(libs.androidx.navigation.compose)
-
-    // ViewModel & LiveData for Compose
-    implementation(libs.androidx.lifecycle.viewmodel.compose.v286)
-    implementation(libs.androidx.lifecycle.livedata.ktx.v286)
-    implementation(libs.androidx.compose.runtime.livedata)
-
-    // Coroutines
-    implementation(libs.kotlinx.coroutines.android)
-
-    // Firebase (using BOM for version management)
-    implementation(platform(libs.firebase.bom))
-    implementation(libs.google.firebase.analytics.ktx)
-    implementation(libs.google.firebase.auth.ktx)
-    implementation(libs.google.firebase.firestore.ktx)
-    implementation(libs.google.firebase.storage.ktx)
-    implementation(libs.firebase.common.ktx)
-    implementation(libs.com.google.firebase.firebase.auth.ktx)
-    implementation(libs.com.google.firebase.firebase.storage.ktx)
-
-    // Retrofit & Gson
-    implementation(libs.retrofit)
-    implementation(libs.retrofit.converter.gson)
-    implementation(libs.gson)
-
-    // Google Maps & Location
-    implementation(libs.maps.compose)
-    implementation(libs.play.services.maps)
-    implementation(libs.play.services.location)
-    implementation(libs.play.services.auth)  // Updated alias
-
-    // iText for PDF
-    implementation(libs.itext)
-
-    // Tests (updated aliases)
-    testImplementation(libs.junit)
-    androidTestImplementation(libs.ext.junit)
-    androidTestImplementation(libs.espresso.core)
+// Core Android/Kotlin
+    implementation("androidx.core:core-ktx:1.13.1")
+    implementation("androidx.appcompat:appcompat:1.7.0")
+    implementation("com.google.android.material:material:1.12.0")
+    implementation("androidx.activity:activity:1.9.2")
+    implementation("androidx.constraintlayout:constraintlayout:2.1.4")
+// Compose
+    implementation(platform("androidx.compose:compose-bom:2024.09.03"))
+    implementation("androidx.compose.ui:ui")
+    implementation("androidx.compose.ui:ui-graphics")
+    implementation("androidx.compose.ui:ui-tooling-preview")
+    implementation("androidx.compose.material3:material3")
+    implementation("androidx.activity:activity-compose:1.9.2")
+    debugImplementation("androidx.compose.ui:ui-tooling")
+    debugImplementation("androidx.compose.ui:ui-test-manifest")
+// Navigation Compose
+    implementation("androidx.navigation:navigation-compose:2.8.1")
+// ViewModel & LiveData for Compose
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.6")
+    implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.8.6")
+    implementation("androidx.compose.runtime:runtime-livedata:1.7.2")
+// Coroutines
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
+// Firebase (using BOM for version management)
+    implementation(platform("com.google.firebase:firebase-bom:33.4.0"))
+    implementation("com.google.firebase:firebase-analytics-ktx")
+    implementation("com.google.firebase:firebase-auth-ktx")
+    implementation("com.google.firebase:firebase-firestore-ktx")
+    implementation("com.google.firebase:firebase-storage-ktx")
+    implementation("com.google.firebase:firebase-common-ktx")
+    implementation("com.google.firebase:firebase-auth-ktx")
+    implementation("com.google.firebase:firebase-storage-ktx")
+// Retrofit & Gson
+    implementation("com.squareup.retrofit2:retrofit:2.11.0")
+    implementation("com.squareup.retrofit2:converter-gson:2.11.0")
+    implementation("com.google.code.gson:gson:2.11.0")
+// Google Maps & Location
+    implementation("com.google.maps.android:maps-compose:6.1.2")
+    implementation("com.google.android.gms:play-services-maps:18.2.0")
+    implementation("com.google.android.gms:play-services-location:21.3.0")
+    implementation("com.google.android.gms:play-services-auth:21.2.0")
+// iText for PDF
+    implementation("com.itextpdf:itext7-core:8.0.5")
+// Tests (updated aliases)
+    testImplementation("junit:junit:4.13.2")
+    androidTestImplementation("androidx.test.ext:junit:1.2.1")
+    androidTestImplementation("androidx.test.espresso:espresso-core:3.6.1")
 }
