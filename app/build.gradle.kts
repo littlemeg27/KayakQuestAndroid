@@ -1,19 +1,12 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
-    id("com.google.gms.google-services") version "4.4.4" apply false
-    id("com.android.application")
+    id("com.google.gms.google-services") version "4.4.4"
 }
 
 android {
     namespace = "com.example.kayakquest"
     compileSdk = 36
-
-    val localProperties = java.util.Properties()
-    val localPropertiesFile = rootProject.file("local.properties")
-    if (localPropertiesFile.exists()) {
-        localProperties.load(localPropertiesFile.inputStream())
-    }
 
     defaultConfig {
         applicationId = "com.example.kayakquest"
@@ -26,9 +19,6 @@ android {
         vectorDrawables {
             useSupportLibrary = true
         }
-
-        manifestPlaceholders["MAPS_API_KEY"] = localProperties.getProperty("maps.api.key", "")
-        buildConfigField("String", "OPENWEATHER_API_KEY", "\"${localProperties.getProperty("openweather.api.key", "")}\"")
     }
 
     buildTypes {
@@ -38,19 +28,6 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            buildConfigField("String", "OPENWEATHER_API_KEY", "\"${localProperties.getProperty("openweather.api.key", "")}\"")
-        }
-        debug {
-            buildConfigField("String", "OPENWEATHER_API_KEY", "\"${localProperties.getProperty("openweather.api.key", "")}\"")
-        }
-    }
-
-    signingConfigs {
-        create("release") {
-            storeFile = file("my-release-key.jks")
-            storePassword = "123456"
-            keyAlias = "my-alias"
-            keyPassword = "123456"
         }
     }
 
@@ -67,11 +44,11 @@ android {
 
     buildFeatures {
         compose = true
-        buildConfig = true  // Enable BuildConfig generation (mirroring Java project)
+        buildConfig = true
     }
 
     composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.4"  // Compatible with Kotlin 1.9+; adjust based on your Kotlin version
+        kotlinCompilerExtensionVersion = "1.5.4"
     }
 
     packaging {
@@ -80,13 +57,14 @@ android {
 }
 
 dependencies {
-// Core Android/Kotlin
+    // Core Android/Kotlin
     implementation("androidx.core:core-ktx:1.13.1")
     implementation("androidx.appcompat:appcompat:1.7.0")
     implementation("com.google.android.material:material:1.12.0")
     implementation("androidx.activity:activity:1.9.2")
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
-// Compose
+
+    // Compose
     implementation(platform("androidx.compose:compose-bom:2024.09.03"))
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.ui:ui-graphics")
@@ -95,35 +73,41 @@ dependencies {
     implementation("androidx.activity:activity-compose:1.9.2")
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
-// Navigation Compose
+
+    // Navigation Compose
     implementation("androidx.navigation:navigation-compose:2.8.1")
-// ViewModel & LiveData for Compose
+
+    // ViewModel & LiveData for Compose
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.6")
     implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.8.6")
     implementation("androidx.compose.runtime:runtime-livedata:1.7.2")
-// Coroutines
+
+    // Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
-// Firebase (using BOM for version management)
+
+    // Firebase (using BOM for version management)
     implementation(platform("com.google.firebase:firebase-bom:33.4.0"))
     implementation("com.google.firebase:firebase-analytics-ktx")
     implementation("com.google.firebase:firebase-auth-ktx")
     implementation("com.google.firebase:firebase-firestore-ktx")
     implementation("com.google.firebase:firebase-storage-ktx")
     implementation("com.google.firebase:firebase-common-ktx")
-    implementation("com.google.firebase:firebase-auth-ktx")
-    implementation("com.google.firebase:firebase-storage-ktx")
-// Retrofit & Gson
+
+    // Retrofit & Gson
     implementation("com.squareup.retrofit2:retrofit:2.11.0")
     implementation("com.squareup.retrofit2:converter-gson:2.11.0")
     implementation("com.google.code.gson:gson:2.11.0")
-// Google Maps & Location
+
+    // Google Maps & Location
     implementation("com.google.maps.android:maps-compose:6.1.2")
     implementation("com.google.android.gms:play-services-maps:18.2.0")
     implementation("com.google.android.gms:play-services-location:21.3.0")
     implementation("com.google.android.gms:play-services-auth:21.2.0")
-// iText for PDF
+
+    // iText for PDF
     implementation("com.itextpdf:itext7-core:8.0.5")
-// Tests (updated aliases)
+
+    // Tests
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.2.1")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.6.1")
