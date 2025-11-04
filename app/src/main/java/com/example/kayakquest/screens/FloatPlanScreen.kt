@@ -17,7 +17,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import com.example.kayakquest.Operations.FloatPlan
+import com.example.kayakquest.operations.FloatPlan
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.FirebaseStorage
@@ -35,7 +35,7 @@ import java.io.File
 fun FloatPlanScreen() {
     val context = LocalContext.current
     val scrollState = rememberScrollState()
-    val floatPlan = remember { mutableStateOf(FloatPlan()) }
+    val floatPlan = remember { mutableStateOf(FloatPlan()) }  // Explicit type inference fix
     val coroutineScope = rememberCoroutineScope()
 
     Column(
@@ -44,16 +44,21 @@ fun FloatPlanScreen() {
             .verticalScroll(scrollState)
             .padding(16.dp)
     ) {
-        // Example TextField; add more for all fields
+        // Example TextFields for fields; add more as needed
         TextField(
             value = floatPlan.value.kayakerName,
             onValueChange = { newValue -> floatPlan.value = floatPlan.value.copy(kayakerName = newValue) },
             label = { Text("Kayaker Name") }
         )
-        // Add other TextFields similarly, e.g.:
-        // TextField(value = floatPlan.value.gender, onValueChange = { floatPlan.value = floatPlan.value.copy(gender = it) }, label = { Text("Gender") })
-        // For spinners (e.g., gender, state): Use ExposedDropdownMenuBox from material3
-        // For dates/times: Use DatePicker and TimePicker from material3 (may require @ExperimentalMaterial3Api)
+        TextField(
+            value = floatPlan.value.gender,
+            onValueChange = { newValue -> floatPlan.value = floatPlan.value.copy(gender = newValue) },
+            label = { Text("Gender") }
+        )
+        // Add similar TextFields for other FloatPlan fields, e.g.:
+        // TextField(value = floatPlan.value.phoneNumber, onValueChange = { floatPlan.value = floatPlan.value.copy(phoneNumber = it) }, label = { Text("Phone Number") })
+        // For dropdowns (gender, state): Use ExposedDropdownMenuBox
+        // For dates/times: Use DatePicker/TimePicker (import androidx.compose.material3.DatePicker, etc.; may need @ExperimentalMaterial3Api)
 
         Button(onClick = {
             coroutineScope.launch {
@@ -73,10 +78,20 @@ private suspend fun createAndUploadPdf(context: Context, floatPlan: FloatPlan) {
             val pdfDoc = PdfDocument(pdfWriter)
             val document = Document(pdfDoc)
 
-            // Add content as paragraphs
+            // Add content as paragraphs (add all fields)
             document.add(Paragraph("Kayaker Name: ${floatPlan.kayakerName}"))
             document.add(Paragraph("Gender: ${floatPlan.gender}"))
-            // Add all other fields similarly...
+            document.add(Paragraph("Phone Number: ${floatPlan.phoneNumber}"))
+            document.add(Paragraph("Age: ${floatPlan.age}"))
+            document.add(Paragraph("Address: ${floatPlan.address}, ${floatPlan.city}, ${floatPlan.state}"))
+            document.add(Paragraph("Emergency Contact: ${floatPlan.emergencyContact} - ${floatPlan.emergencyPhone}"))
+            document.add(Paragraph("Kayak Make: ${floatPlan.kayakMake}, Model: ${floatPlan.kayakModel}, Length: ${floatPlan.kayakLength}, Color: ${floatPlan.kayakColor}"))
+            document.add(Paragraph("Safety Equipment Notes: ${floatPlan.safetyEquipmentNotes}"))
+            document.add(Paragraph("Vehicle Make: ${floatPlan.vehicleMake}, Model: ${floatPlan.vehicleModel}, Color: ${floatPlan.vehicleColor}, Plate: ${floatPlan.plateNumber}"))
+            document.add(Paragraph("Departure Date: ${floatPlan.departureDate}, Time: ${floatPlan.departureTime}"))
+            document.add(Paragraph("Put In Location: ${floatPlan.putInLocation}"))
+            document.add(Paragraph("Take Out Location: ${floatPlan.takeOutLocation}, Return Time: ${floatPlan.returnTime}"))
+            document.add(Paragraph("Trip Notes: ${floatPlan.tripNotes}"))
 
             document.close()
 

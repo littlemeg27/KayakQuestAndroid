@@ -5,6 +5,12 @@ import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material.icons.filled.Create
+import androidx.compose.material.icons.filled.Place
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -48,15 +54,12 @@ fun KayakQuestApp() {
     )
 
     Scaffold(
-        bottomBar =
-            {
-            NavigationBar
-                {
+        bottomBar = {
+            NavigationBar {
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
                 val currentDestination = navBackStackEntry?.destination
 
-                items.forEach
-                { screen ->
+                items.forEach { screen ->
                     NavigationBarItem(
                         icon = { Icon(screen.icon, contentDescription = screen.label) },
                         label = { Text(screen.label) },
@@ -91,14 +94,13 @@ fun KayakQuestApp() {
 
 sealed class Screen(val route: String, val label: String, val icon: androidx.compose.ui.graphics.vector.ImageVector)
 {
-    data object SignIn : Screen("signIn", "Sign In", ic_signin.xml)
-    data object Map : Screen("map", "Map", ic_map.xml)
-    data object FloatPlan : Screen("floatPlan", "Float Plan", ic_float_plan.xml)
-    data object Weather : Screen("weather", "Weather", ic_weather.xml)
-    data object Settings : Screen("settings", "Settings", ic_settings.xml)
+    data object SignIn : Screen("signIn", "Sign In", Icons.Default.AccountCircle)
+    data object Map : Screen("map", "Map", Icons.Default.Place)
+    data object FloatPlan : Screen("floatPlan", "Float Plan", Icons.Default.Create)
+    data object Weather : Screen("weather", "Weather", Icons.Default.Warning)
+    data object Settings : Screen("settings", "Settings", Icons.Default.Settings)
 }
 
-// Placeholder composables - Implement in separate files; removed unused navController param
 @Composable
 fun SignInScreen()
 {
