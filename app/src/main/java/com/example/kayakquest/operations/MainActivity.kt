@@ -21,19 +21,23 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
-import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.google.firebase.FirebaseApp
 
-class MainActivity : ComponentActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
+class MainActivity : ComponentActivity()
+{
+    override fun onCreate(savedInstanceState: Bundle?)
+    {
         super.onCreate(savedInstanceState)
-        try {
+        try
+        {
             Log.d("MainActivity", "FirebaseApp initialized: ${FirebaseApp.getInstance().name}")
-        } catch (e: Exception) {
+        }
+        catch (e: Exception)
+        {
             Log.e("MainActivity", "Firebase not initialized", e)
         }
         setContent {
@@ -92,8 +96,7 @@ fun KayakQuestApp() {
     }
 }
 
-sealed class Screen(val route: String, val label: String, val icon: androidx.compose.ui.graphics.vector.ImageVector)
-{
+sealed class Screen(val route: String, val label: String, val icon: androidx.compose.ui.graphics.vector.ImageVector) {
     data object SignIn : Screen("signIn", "Sign In", Icons.Default.AccountCircle)
     data object Map : Screen("map", "Map", Icons.Default.Place)
     data object FloatPlan : Screen("floatPlan", "Float Plan", Icons.Default.Create)
@@ -102,31 +105,26 @@ sealed class Screen(val route: String, val label: String, val icon: androidx.com
 }
 
 @Composable
-fun SignInScreen()
-{
+fun SignInScreen() {
     Text("Sign In Screen")
 }
 
 @Composable
-fun MapScreen()
-{
+fun MapScreen() {
     Text("Map Screen")
 }
 
 @Composable
-fun FloatPlanScreen()
-{
+fun FloatPlanScreen() {
     Text("Float Plan Screen")
 }
 
 @Composable
-fun WeatherScreen()
-{
+fun WeatherScreen() {
     Text("Weather Screen")
 }
 
 @Composable
-fun SettingsScreen()
-{
+fun SettingsScreen() {
     Text("Settings Screen")
 }

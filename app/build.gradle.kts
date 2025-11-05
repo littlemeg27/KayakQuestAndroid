@@ -111,4 +111,13 @@ dependencies {
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.2.1")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.6.1")
+
+    // Credential Manager (replaces deprecated GoogleSignIn)
+    implementation("androidx.credentials:credentials:1.5.0")
+    implementation("androidx.credentials:credentials-play-services-auth:1.5.0")
+    implementation("com.google.android.libraries.identity.googleid:googleid:1.1.1")
+
+    // Firebase Auth (already there, but ensure BOM is up to date)
+    implementation(platform("com.google.firebase:firebase-bom:33.4.0"))
+    implementation("com.google.firebase:firebase-auth-ktx")
 }

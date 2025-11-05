@@ -35,7 +35,7 @@ import java.io.File
 fun FloatPlanScreen() {
     val context = LocalContext.current
     val scrollState = rememberScrollState()
-    val floatPlan = remember { mutableStateOf(FloatPlan()) }  // Explicit type inference fix
+    val floatPlan = remember { mutableStateOf(FloatPlan()) }
     val coroutineScope = rememberCoroutineScope()
 
     Column(

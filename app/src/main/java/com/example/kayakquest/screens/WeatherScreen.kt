@@ -19,9 +19,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.runtime.livedata.observeAsState
-import com.example.kayakquest.Operations.SelectedPinViewModel
-import com.example.kayakquest.Operations.OpenWeatherResponse
-import com.example.kayakquest.Operations.WeatherApiService
+import com.example.kayakquest.operations.SelectedPinViewModel
+import com.example.kayakquest.operations.OpenWeatherResponse
+import com.example.kayakquest.operations.WeatherApiService
 import com.google.android.gms.maps.model.LatLng
 import kotlinx.coroutines.launch
 import retrofit2.Retrofit
@@ -36,7 +36,7 @@ import java.util.Locale
 fun WeatherScreen(
     viewModel: SelectedPinViewModel = viewModel()
 ) {
-    val selectedPin: LatLng? by viewModel.getSelectedPin().observeAsState(initial = null)  // Specify type and initial to fix inference
+    val selectedPin: LatLng? by viewModel.getSelectedPin().observeAsState(null)
     val weatherState = remember { mutableStateOf<OpenWeatherResponse?>(null) }
     val isLoading = remember { mutableStateOf(false) }
     val errorMessage = remember { mutableStateOf<String?>(null) }
@@ -85,12 +85,9 @@ fun WeatherScreen(
             CircularProgressIndicator()
         } else if (errorMessage.value != null) {
             Text(text = errorMessage.value ?: "Unknown error")
-        }
-        else
-        {
+        } else {
             val weather = weatherState.value ?: return@Column
-            Column(modifier = Modifier.padding(16.dp))
-            {
+            Column(modifier = Modifier.padding(16.dp)) {
                 Text(text = "Location: ${weather.timezone?.split("/")?.lastOrNull() ?: "Unknown"}")
                 Text(text = "Temp: ${weather.current?.temperature?.toInt() ?: 0}°F")
                 weather.current?.weather?.firstOrNull()?.description?.let { desc: String ->
