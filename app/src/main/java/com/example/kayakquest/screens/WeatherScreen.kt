@@ -20,29 +20,31 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.runtime.livedata.observeAsState
 import com.example.kayakquest.operations.SelectedPinViewModel
-import com.example.kayakquest.operations.OpenWeatherResponse
-import com.example.kayakquest.operations.WeatherApiService
 import com.google.android.gms.maps.model.LatLng
 import kotlinx.coroutines.launch
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.Call
 import retrofit2.Response
+import retrofit2.http.GET
+import retrofit2.http.Query
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import com.example.kayakquest.BuildConfig
 
 @Composable
 fun WeatherScreen(
     viewModel: SelectedPinViewModel = viewModel()
 ) {
     val selectedPin: LatLng? by viewModel.getSelectedPin().observeAsState(null)
-    val weatherState = remember { mutableStateOf<OpenWeatherResponse?>(null) }
+    val currentWeatherState = remember { mutableStateOf<WeatherbitResponse?>(null) }
+    val hourlyForecastState = remember { mutableStateOf<WeatherbitHourlyResponse?>(null) }
     val isLoading = remember { mutableStateOf(false) }
     val errorMessage = remember { mutableStateOf<String?>(null) }
 
     val retrofit: Retrofit = Retrofit.Builder()
-        .baseUrl("https://api.openweathermap.org/")
+        .baseUrl("https://api.weatherbit.io/")
         .addConverterFactory(GsonConverterFactory.create())
         .build()
     val apiService: WeatherApiService = retrofit.create(WeatherApiService::class.java)
@@ -55,18 +57,33 @@ fun WeatherScreen(
         errorMessage.value = null
         coroutineScope.launch {
             try {
-                val call: Call<OpenWeatherResponse> = apiService.getWeather(
+                // Fetch current weather
+                val currentCall: Call<WeatherbitResponse> = apiService.getCurrentWeather(
                     latLng.latitude,
                     latLng.longitude,
-                    "YOUR_API_KEY_HERE",
-                    "imperial",
-                    "minutely,daily,alerts"
+                    BuildConfig.OPENWEATHER_API_KEY,  // Use your API key (rename if needed)
+                    "I"
                 )
-                val response: Response<OpenWeatherResponse> = call.execute()
-                if (response.isSuccessful) {
-                    weatherState.value = response.body()
+                val currentResponse: Response<WeatherbitResponse> = currentCall.execute()
+                if (currentResponse.isSuccessful) {
+                    currentWeatherState.value = currentResponse.body()
                 } else {
-                    errorMessage.value = "Failed to fetch weather: ${response.code()}"
+                    errorMessage.value = "Failed to fetch current weather: ${currentResponse.code()}"
+                }
+
+                // Fetch hourly forecast
+                val hourlyCall: Call<WeatherbitHourlyResponse> = apiService.getHourlyForecast(
+                    latLng.latitude,
+                    latLng.longitude,
+                    BuildConfig.OPENWEATHER_API_KEY,
+                    "I",
+                    24
+                )
+                val hourlyResponse: Response<WeatherbitHourlyResponse> = hourlyCall.execute()
+                if (hourlyResponse.isSuccessful) {
+                    hourlyForecastState.value = hourlyResponse.body()
+                } else {
+                    errorMessage.value = "Failed to fetch hourly forecast: ${hourlyResponse.code()}"
                 }
             } catch (e: Exception) {
                 errorMessage.value = "Error: ${e.message}"
@@ -86,30 +103,30 @@ fun WeatherScreen(
         } else if (errorMessage.value != null) {
             Text(text = errorMessage.value ?: "Unknown error")
         } else {
-            val weather = weatherState.value ?: return@Column
+            val currentWeather = currentWeatherState.value?.data?.firstOrNull() ?: return@Column
+            val hourlyForecast = hourlyForecastState.value?.data ?: emptyList()
+
             Column(modifier = Modifier.padding(16.dp)) {
-                Text(text = "Location: ${weather.timezone?.split("/")?.lastOrNull() ?: "Unknown"}")
-                Text(text = "Temp: ${weather.current?.temperature?.toInt() ?: 0}°F")
-                weather.current?.weather?.firstOrNull()?.description?.let { desc: String ->
-                    Text(text = "Description: $desc")
-                }
-                Text(text = "Humidity: ${weather.current?.humidity ?: 0}%")
-                Text(text = "Wind Speed: ${weather.current?.windSpeed ?: 0.0} mph")
-                Text(text = "Pressure: ${weather.current?.pressure ?: 0} hPa")
+                Text(text = "Location: ${currentWeather.city_name ?: "Unknown"}")
+                Text(text = "Temp: ${currentWeather.temp?.toInt() ?: 0}°F")
+                Text(text = "Description: ${currentWeather.weather?.description ?: "N/A"}")
+                Text(text = "Humidity: ${currentWeather.rh ?: 0}%")
+                Text(text = "Wind Speed: ${currentWeather.wind_spd ?: 0.0} mph")
+                Text(text = "Pressure: ${currentWeather.pres ?: 0} hPa")
 
                 LazyRow {
-                    items(weather.hourly ?: emptyList<OpenWeatherResponse.Hourly>()) { hour: OpenWeatherResponse.Hourly ->
+                    items(hourlyForecast) { hour ->
                         Column(modifier = Modifier.padding(8.dp)) {
                             Text(
                                 text = "Time: ${
                                     SimpleDateFormat("HH:00", Locale.getDefault()).format(
-                                        Date(hour.timestamp * 1000)
+                                        Date(hour.ts!! * 1000)
                                     )
                                 }"
                             )
-                            Text(text = "Temp: ${hour.temperature.toInt()}°F")
-                            hour.weather?.firstOrNull()?.description?.let { desc: String ->
-                                Text(text = desc)
+                            Text(text = "Temp: ${hour.temp?.toInt() ?: 0}°F")
+                            hour.weather?.let { weatherDesc ->
+                                Text(text = weatherDesc.description ?: "N/A")
                             }
                         }
                     }

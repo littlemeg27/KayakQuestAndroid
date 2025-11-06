@@ -1,4 +1,4 @@
-package com.example.kayakquest.operations
+package com.example.kayakquest.weather
 
 import com.google.gson.annotations.SerializedName
 

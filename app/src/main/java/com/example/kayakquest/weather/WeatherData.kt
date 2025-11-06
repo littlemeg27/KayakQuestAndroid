@@ -1,0 +1,43 @@
+package com.example.kayakquest.weather
+
+import com.example.kayakquest.weather.WeatherDescription
+
+data class WeatherData(
+    val wind_cdir: String? = null,
+    val rh: Int? = null,
+    val pod: String? = null,
+    val lon: Double? = null,
+    val pres: Double? = null,
+    val timezone: String? = null,
+    val ob_time: String? = null,
+    val country_code: String? = null,
+    val clouds: Int? = null,
+    val vis: Int? = null,
+    val wind_spd: Double? = null,
+    val gust: Int? = null,
+    val wind_cdir_full: String? = null,
+    val app_temp: Double? = null,
+    val state_code: String? = null,
+    val ts: Long? = null,
+    val h_angle: Int? = null,
+    val dewpt: Double? = null,
+    val weather: WeatherDescription? = null,
+    val uv: Int? = null,
+    val aqi: Int? = null,
+    val station: String? = null,
+    val sources: List<String>? = null,
+    val wind_dir: Int? = null,
+    val elev_angle: Int? = null,
+    val datetime: String? = null,
+    val precip: Int? = null,
+    val ghi: Double? = null,
+    val dni: Int? = null,
+    val dhi: Int? = null,
+    val solar_rad: Int? = null,
+    val city_name: String? = null,
+    val sunrise: String? = null,
+    val sunset: String? = null,
+    val temp: Double? = null,
+    val lat: Double? = null,
+    val slp: Double? = null
+)
