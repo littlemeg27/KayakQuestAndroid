@@ -1,7 +1,5 @@
 package com.example.kayakquest.weather
 
-import com.example.kayakquest.weather.WeatherDescription
-
 data class HourlyData(
     val app_temp: Double? = null,
     val clouds: Int? = null,

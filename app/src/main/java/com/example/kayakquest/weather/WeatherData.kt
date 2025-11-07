@@ -1,7 +1,5 @@
 package com.example.kayakquest.weather
 
-import com.example.kayakquest.weather.WeatherDescription
-
 data class WeatherData(
     val wind_cdir: String? = null,
     val rh: Int? = null,

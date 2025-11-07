@@ -24,14 +24,18 @@ import com.google.android.gms.maps.model.LatLng
 import kotlinx.coroutines.launch
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
-import retrofit2.Call
 import retrofit2.Response
-import retrofit2.http.GET
-import retrofit2.http.Query
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import com.example.kayakquest.BuildConfig
+import com.example.kayakquest.weather.WeatherApiService
+import com.example.kayakquest.weather.WeatherbitResponse
+import com.example.kayakquest.weather.WeatherbitHourlyResponse
+import com.example.kayakquest.weather.WeatherData
+import com.example.kayakquest.weather.HourlyData
+import com.example.kayakquest.weather.WeatherDescription
+import okhttp3.OkHttpClient
 
 @Composable
 fun WeatherScreen(
@@ -43,8 +47,20 @@ fun WeatherScreen(
     val isLoading = remember { mutableStateOf(false) }
     val errorMessage = remember { mutableStateOf<String?>(null) }
 
+    // OkHttp client with RapidAPI headers
+    val client = OkHttpClient.Builder()
+        .addInterceptor { chain ->
+            val request = chain.request().newBuilder()
+                .addHeader("x-rapidapi-key", BuildConfig.RAPIDAPI_KEY)
+                .addHeader("x-rapidapi-host", "weatherbit-v1-mashape.p.rapidapi.com")
+                .build()
+            chain.proceed(request)
+        }
+        .build()
+
     val retrofit: Retrofit = Retrofit.Builder()
-        .baseUrl("https://api.weatherbit.io/")
+        .baseUrl("https://weatherbit-v1-mashape.p.rapidapi.com/")
+        .client(client)
         .addConverterFactory(GsonConverterFactory.create())
         .build()
     val apiService: WeatherApiService = retrofit.create(WeatherApiService::class.java)
@@ -58,10 +74,9 @@ fun WeatherScreen(
         coroutineScope.launch {
             try {
                 // Fetch current weather
-                val currentCall: Call<WeatherbitResponse> = apiService.getCurrentWeather(
+                val currentCall = apiService.getCurrentWeather(
                     latLng.latitude,
                     latLng.longitude,
-                    BuildConfig.OPENWEATHER_API_KEY,  // Use your API key (rename if needed)
                     "I"
                 )
                 val currentResponse: Response<WeatherbitResponse> = currentCall.execute()
@@ -72,10 +87,9 @@ fun WeatherScreen(
                 }
 
                 // Fetch hourly forecast
-                val hourlyCall: Call<WeatherbitHourlyResponse> = apiService.getHourlyForecast(
+                val hourlyCall = apiService.getHourlyForecast(
                     latLng.latitude,
                     latLng.longitude,
-                    BuildConfig.OPENWEATHER_API_KEY,
                     "I",
                     24
                 )
