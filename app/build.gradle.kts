@@ -5,7 +5,6 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.compose.compiler)
     id("com.google.gms.google-services") version "4.4.4"
-    id("org.jetbrains.kotlin.plugin.compose") version "2.0.0"
 }
 
 android {
@@ -18,12 +17,13 @@ android {
         targetSdk = 36
         versionCode = 1
         versionName = "1.0"
-        manifestPlaceholders["MAPS_API_KEY"] = "AIzaSyBtfEbH9LA4YH4Ry_uwEzko9DGejfpmos0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
             useSupportLibrary = true
         }
+        manifestPlaceholders["MAPS_API_KEY"] = "AIzaSyBtfEbH9LA4YH4Ry_uwEzko9DGejfpmos0"
+        buildConfigField("String", "RAPIDAPI_KEY", "\"dba23dc82fmsh8c6ec87700d131bp166c0ejsnacce35d3da6d\"")
     }
 
     buildTypes {
@@ -43,7 +43,7 @@ android {
 
     kotlin {
         compilerOptions {
-            jvmTarget.set(JvmTarget.JVM_17)
+            jvmTarget = JavaVersion.VERSION_17
         }
     }
 
@@ -119,8 +119,8 @@ dependencies {
     androidTestImplementation("androidx.test.espresso:espresso-core:3.6.1")
 
     // Credential Manager (replaces deprecated GoogleSignIn)
-    implementation("androidx.credentials:credentials:1.5.0")
-    implementation("androidx.credentials:credentials-play-services-auth:1.5.0")
+    implementation("androidx.credentials:credentials:1.3.0")
+    implementation("androidx.credentials:credentials-play-services-auth:1.3.0")
     implementation("com.google.android.libraries.identity.googleid:googleid:1.1.1")
 
     // Firebase Auth (already there, but ensure BOM is up to date)

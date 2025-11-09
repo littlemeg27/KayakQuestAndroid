@@ -22,8 +22,10 @@ import androidx.compose.runtime.livedata.observeAsState
 import com.example.kayakquest.operations.SelectedPinViewModel
 import com.google.android.gms.maps.model.LatLng
 import kotlinx.coroutines.launch
+import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import retrofit2.Call
 import retrofit2.Response
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -35,7 +37,6 @@ import com.example.kayakquest.weather.WeatherbitHourlyResponse
 import com.example.kayakquest.weather.WeatherData
 import com.example.kayakquest.weather.HourlyData
 import com.example.kayakquest.weather.WeatherDescription
-import okhttp3.OkHttpClient
 
 @Composable
 fun WeatherScreen(
@@ -75,9 +76,10 @@ fun WeatherScreen(
             try {
                 // Fetch current weather
                 val currentCall = apiService.getCurrentWeather(
-                    latLng.latitude,
                     latLng.longitude,
-                    "I"
+                    latLng.latitude,
+                    "imperial",
+                    "en"
                 )
                 val currentResponse: Response<WeatherbitResponse> = currentCall.execute()
                 if (currentResponse.isSuccessful) {
@@ -88,10 +90,10 @@ fun WeatherScreen(
 
                 // Fetch hourly forecast
                 val hourlyCall = apiService.getHourlyForecast(
-                    latLng.latitude,
                     latLng.longitude,
-                    "I",
-                    24
+                    latLng.latitude,
+                    "imperial",
+                    "en"
                 )
                 val hourlyResponse: Response<WeatherbitHourlyResponse> = hourlyCall.execute()
                 if (hourlyResponse.isSuccessful) {
