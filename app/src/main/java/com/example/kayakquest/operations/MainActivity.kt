@@ -5,12 +5,6 @@ import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AccountCircle
-import androidx.compose.material.icons.filled.Create
-import androidx.compose.material.icons.filled.Place
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -25,6 +19,12 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.example.kayakquest.data.Screen
+import com.example.kayakquest.screens.FloatPlanScreen
+import com.example.kayakquest.screens.MapScreen
+import com.example.kayakquest.screens.SettingsScreen
+import com.example.kayakquest.screens.SignInScreen
+import com.example.kayakquest.screens.WeatherScreen
 import com.google.firebase.FirebaseApp
 
 class MainActivity : ComponentActivity()
@@ -40,14 +40,15 @@ class MainActivity : ComponentActivity()
         {
             Log.e("MainActivity", "Firebase not initialized", e)
         }
-        setContent {
+        setContent{
             KayakQuestApp()
         }
     }
 }
 
 @Composable
-fun KayakQuestApp() {
+fun KayakQuestApp()
+{
     val navController = rememberNavController()
     val items = listOf(
         Screen.SignIn,
@@ -58,7 +59,8 @@ fun KayakQuestApp() {
     )
 
     Scaffold(
-        bottomBar = {
+        bottomBar =
+            {
             NavigationBar {
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
                 val currentDestination = navBackStackEntry?.destination
@@ -94,37 +96,4 @@ fun KayakQuestApp() {
             composable(Screen.Settings.route) { SettingsScreen() }
         }
     }
-}
-
-sealed class Screen(val route: String, val label: String, val icon: androidx.compose.ui.graphics.vector.ImageVector) {
-    data object SignIn : Screen("signIn", "Sign In", Icons.Default.AccountCircle)
-    data object Map : Screen("map", "Map", Icons.Default.Place)
-    data object FloatPlan : Screen("floatPlan", "Float Plan", Icons.Default.Create)
-    data object Weather : Screen("weather", "Weather", Icons.Default.Warning)
-    data object Settings : Screen("settings", "Settings", Icons.Default.Settings)
-}
-
-@Composable
-fun SignInScreen() {
-    Text("Sign In Screen")
-}
-
-@Composable
-fun MapScreen() {
-    Text("Map Screen")
-}
-
-@Composable
-fun FloatPlanScreen() {
-    Text("Float Plan Screen")
-}
-
-@Composable
-fun WeatherScreen() {
-    Text("Weather Screen")
-}
-
-@Composable
-fun SettingsScreen() {
-    Text("Settings Screen")
 }

@@ -30,8 +30,8 @@ fun MapScreen(viewModel: SelectedPinViewModel = viewModel()) {
             viewModel.setSelectedPin(latLng)
         }
     ) {
-        // Load markers from JSON (implement loadMarkersFromJson in Kotlin)
-        val markers = loadMarkersFromJson(context) // Pass context
+
+        val markers = loadMarkersFromJson(context)
         markers.forEach { marker ->
             Marker(
                 state = MarkerState(position = LatLng(marker.latitude, marker.longitude)),
@@ -46,8 +46,8 @@ fun MapScreen(viewModel: SelectedPinViewModel = viewModel()) {
     }
 }
 
-// Port loadMarkersFromJson to Kotlin (place in a utility file or here)
-fun loadMarkersFromJson(context: android.content.Context): List<MarkerData> {
+fun loadMarkersFromJson(context: android.content.Context): List<MarkerData>
+{
     val gson = Gson()
     val inputStream = context.assets.open("prepopulated_markers.json")
     val reader = InputStreamReader(inputStream)

@@ -95,7 +95,6 @@ private suspend fun createAndUploadPdf(context: Context, floatPlan: FloatPlan) {
 
             document.close()
 
-            // Upload to Firebase
             val auth = FirebaseAuth.getInstance()
             val userId = auth.currentUser?.uid ?: return@withContext
             val storageRef = FirebaseStorage.getInstance().reference
