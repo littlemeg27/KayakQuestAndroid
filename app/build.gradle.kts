@@ -1,4 +1,5 @@
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget  // Required for JvmTarget.JVM_17
+import org.gradle.api.JavaVersion
 
 plugins {
     alias(libs.plugins.android.application)
@@ -22,7 +23,8 @@ android {
         vectorDrawables {
             useSupportLibrary = true
         }
-        manifestPlaceholders["MAPS_API_KEY"] = "AIzaSyBtfEbH9LA4YH4Ry_uwEzko9DGejfpmos0"
+
+        // Add your RapidAPI key securely
         buildConfigField("String", "RAPIDAPI_KEY", "\"dba23dc82fmsh8c6ec87700d131bp166c0ejsnacce35d3da6d\"")
     }
 
@@ -43,7 +45,7 @@ android {
 
     kotlin {
         compilerOptions {
-            jvmTarget = JavaVersion.VERSION_17
+            jvmTarget.set(JvmTarget.JVM_17)  // FIXED: Use .set() and JvmTarget
         }
     }
 
@@ -62,8 +64,7 @@ android {
 }
 
 dependencies {
-    // Core Android/Kotlin
-    implementation("com.google.android.gms:play-services-location:21.3.0")
+    // Core
     implementation("androidx.core:core-ktx:1.13.1")
     implementation("androidx.appcompat:appcompat:1.7.0")
     implementation("com.google.android.material:material:1.12.0")
@@ -80,10 +81,10 @@ dependencies {
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
 
-    // Navigation Compose
+    // Navigation
     implementation("androidx.navigation:navigation-compose:2.8.1")
 
-    // ViewModel & LiveData for Compose
+    // ViewModel & LiveData
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.6")
     implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.8.6")
     implementation("androidx.compose.runtime:runtime-livedata:1.7.2")
@@ -91,7 +92,7 @@ dependencies {
     // Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
 
-    // Firebase (using BOM for version management)
+    // Firebase
     implementation(platform("com.google.firebase:firebase-bom:33.4.0"))
     implementation("com.google.firebase:firebase-analytics-ktx")
     implementation("com.google.firebase:firebase-auth-ktx")
@@ -99,31 +100,28 @@ dependencies {
     implementation("com.google.firebase:firebase-storage-ktx")
     implementation("com.google.firebase:firebase-common-ktx")
 
-    // Retrofit & Gson
+    // Retrofit
     implementation("com.squareup.retrofit2:retrofit:2.11.0")
     implementation("com.squareup.retrofit2:converter-gson:2.11.0")
     implementation("com.google.code.gson:gson:2.11.0")
 
-    // Google Maps & Location
+    // Maps & Location
     implementation("com.google.maps.android:maps-compose:6.1.2")
     implementation("com.google.android.gms:play-services-maps:18.2.0")
     implementation("com.google.android.gms:play-services-location:21.3.0")
     implementation("com.google.android.gms:play-services-auth:21.2.0")
 
-    // iText for PDF
+    // iText PDF
     implementation("com.itextpdf:itext7-core:8.0.5")
+
+    // Credential Manager (Modern Google Sign-In)
+    implementation("androidx.credentials:credentials:1.3.0")
+    implementation("androidx.credentials:credentials-play-services-auth:1.3.0")
+    implementation("com.google.android.libraries.identity.googleid:googleid:1.1.1")
 
     // Tests
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.2.1")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.6.1")
-
-    // Credential Manager (replaces deprecated GoogleSignIn)
-    implementation("androidx.credentials:credentials:1.3.0")
-    implementation("androidx.credentials:credentials-play-services-auth:1.3.0")
-    implementation("com.google.android.libraries.identity.googleid:googleid:1.1.1")
-
-    // Firebase Auth (already there, but ensure BOM is up to date)
-    implementation(platform("com.google.firebase:firebase-bom:33.4.0"))
-    implementation("com.google.firebase:firebase-auth-ktx")
+    implementation("com.google.accompanist:accompanist-permissions:0.37.3")
 }

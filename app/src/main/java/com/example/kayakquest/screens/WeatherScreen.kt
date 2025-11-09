@@ -34,21 +34,17 @@ import com.example.kayakquest.BuildConfig
 import com.example.kayakquest.weather.WeatherApiService
 import com.example.kayakquest.weather.WeatherbitResponse
 import com.example.kayakquest.weather.WeatherbitHourlyResponse
-import com.example.kayakquest.weather.WeatherData
-import com.example.kayakquest.weather.HourlyData
-import com.example.kayakquest.weather.WeatherDescription
 
 @Composable
-fun WeatherScreen(
-    viewModel: SelectedPinViewModel = viewModel()
-) {
+fun WeatherScreen(viewModel: SelectedPinViewModel = viewModel())
+{
     val selectedPin: LatLng? by viewModel.getSelectedPin().observeAsState(null)
-    val currentWeatherState = remember { mutableStateOf<WeatherbitResponse?>(null) }
-    val hourlyForecastState = remember { mutableStateOf<WeatherbitHourlyResponse?>(null) }
-    val isLoading = remember { mutableStateOf(false) }
-    val errorMessage = remember { mutableStateOf<String?>(null) }
 
-    // OkHttp client with RapidAPI headers
+    val currentWeather = remember { mutableStateOf<WeatherbitResponse?>(null) }
+    val hourlyForecast = remember { mutableStateOf<WeatherbitHourlyResponse?>(null) }
+    val isLoading = remember { mutableStateOf(false) }
+    val errorMsg = remember { mutableStateOf<String?>(null) }
+
     val client = OkHttpClient.Builder()
         .addInterceptor { chain ->
             val request = chain.request().newBuilder()
@@ -59,51 +55,48 @@ fun WeatherScreen(
         }
         .build()
 
-    val retrofit: Retrofit = Retrofit.Builder()
+    val retrofit = Retrofit.Builder()
         .baseUrl("https://weatherbit-v1-mashape.p.rapidapi.com/")
         .client(client)
         .addConverterFactory(GsonConverterFactory.create())
         .build()
-    val apiService: WeatherApiService = retrofit.create(WeatherApiService::class.java)
 
-    val coroutineScope = rememberCoroutineScope()
+    val api = retrofit.create(WeatherApiService::class.java)
 
-    LaunchedEffect(selectedPin) {
+    val scope = rememberCoroutineScope()
+
+    LaunchedEffect(selectedPin)
+    {
         val latLng = selectedPin ?: LatLng(35.227085, -80.843124)
         isLoading.value = true
-        errorMessage.value = null
-        coroutineScope.launch {
-            try {
-                // Fetch current weather
-                val currentCall = apiService.getCurrentWeather(
-                    latLng.longitude,
-                    latLng.latitude,
-                    "imperial",
-                    "en"
-                )
-                val currentResponse: Response<WeatherbitResponse> = currentCall.execute()
-                if (currentResponse.isSuccessful) {
-                    currentWeatherState.value = currentResponse.body()
-                } else {
-                    errorMessage.value = "Failed to fetch current weather: ${currentResponse.code()}"
-                }
+        errorMsg.value = null
 
-                // Fetch hourly forecast
-                val hourlyCall = apiService.getHourlyForecast(
+        scope.launch {
+            try
+            {
+                val curCall: Call<WeatherbitResponse> = api.getCurrentWeather(
                     latLng.longitude,
                     latLng.latitude,
-                    "imperial",
-                    "en"
+                    "I"
                 )
-                val hourlyResponse: Response<WeatherbitHourlyResponse> = hourlyCall.execute()
-                if (hourlyResponse.isSuccessful) {
-                    hourlyForecastState.value = hourlyResponse.body()
-                } else {
-                    errorMessage.value = "Failed to fetch hourly forecast: ${hourlyResponse.code()}"
-                }
-            } catch (e: Exception) {
-                errorMessage.value = "Error: ${e.message}"
-            } finally {
+                val curResp: Response<WeatherbitResponse> = curCall.execute()
+                if (curResp.isSuccessful) currentWeather.value = curResp.body()
+                else errorMsg.value = "Current: ${curResp.code()}"
+
+                val hourCall: Call<WeatherbitHourlyResponse> = api.getHourlyForecast(
+                    latLng.longitude,
+                    latLng.latitude,
+                    "I",
+                    "24"
+                )
+                val hourResp: Response<WeatherbitHourlyResponse> = hourCall.execute()
+                if (hourResp.isSuccessful) hourlyForecast.value = hourResp.body()
+                else errorMsg.value = "Hourly: ${hourResp.code()}"
+            } catch (e: Exception)
+            {
+                errorMsg.value = e.message
+            } finally
+            {
                 isLoading.value = false
             }
         }
@@ -114,36 +107,37 @@ fun WeatherScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        if (isLoading.value) {
+        if (isLoading.value)
+        {
             CircularProgressIndicator()
-        } else if (errorMessage.value != null) {
-            Text(text = errorMessage.value ?: "Unknown error")
-        } else {
-            val currentWeather = currentWeatherState.value?.data?.firstOrNull() ?: return@Column
-            val hourlyForecast = hourlyForecastState.value?.data ?: emptyList()
+        } else if (errorMsg.value != null)
+        {
+            Text(text = errorMsg.value ?: "Unknown error")
+        } else
+        {
+            val cur = currentWeather.value?.data?.firstOrNull() ?: return@Column
+            val hourly = hourlyForecast.value?.data ?: emptyList()
 
             Column(modifier = Modifier.padding(16.dp)) {
-                Text(text = "Location: ${currentWeather.city_name ?: "Unknown"}")
-                Text(text = "Temp: ${currentWeather.temp?.toInt() ?: 0}°F")
-                Text(text = "Description: ${currentWeather.weather?.description ?: "N/A"}")
-                Text(text = "Humidity: ${currentWeather.rh ?: 0}%")
-                Text(text = "Wind Speed: ${currentWeather.wind_spd ?: 0.0} mph")
-                Text(text = "Pressure: ${currentWeather.pres ?: 0} hPa")
+                Text(text = "Location: ${cur.city_name ?: "Unknown"}")
+                Text(text = "Temp: ${cur.temp?.toInt() ?: 0}°F")
+                Text(text = "Description: ${cur.weather?.description ?: "N/A"}")
+                Text(text = "Humidity: ${cur.rh ?: 0}%")
+                Text(text = "Wind Speed: ${cur.wind_spd ?: 0.0} mph")
+                Text(text = "Pressure: ${cur.pres ?: 0} hPa")
 
                 LazyRow {
-                    items(hourlyForecast) { hour ->
-                        Column(modifier = Modifier.padding(8.dp)) {
+                    items(hourly) { h ->
+                        Column(modifier = Modifier.padding(8.dp))
+                        {
                             Text(
                                 text = "Time: ${
-                                    SimpleDateFormat("HH:00", Locale.getDefault()).format(
-                                        Date(hour.ts!! * 1000)
-                                    )
+                                    SimpleDateFormat("HH:00", Locale.getDefault())
+                                        .format(Date(h.ts!! * 1000))
                                 }"
                             )
-                            Text(text = "Temp: ${hour.temp?.toInt() ?: 0}°F")
-                            hour.weather?.let { weatherDesc ->
-                                Text(text = weatherDesc.description ?: "N/A")
-                            }
+                            Text(text = "Temp: ${h.temp?.toInt() ?: 0}°F")
+                            h.weather?.let { wd -> Text(text = wd.description ?: "N/A") }
                         }
                     }
                 }
