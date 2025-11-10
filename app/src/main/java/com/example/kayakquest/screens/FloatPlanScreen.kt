@@ -5,19 +5,25 @@ import android.net.Uri
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.kayakquest.data.KayakerProfile
 import com.example.kayakquest.operations.FloatPlan
+import com.example.kayakquest.viewmodels.ProfileViewModel
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.FirebaseStorage
@@ -26,6 +32,7 @@ import com.itextpdf.kernel.pdf.PdfWriter
 import com.itextpdf.layout.Document
 import com.itextpdf.layout.element.Paragraph
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
@@ -33,43 +40,31 @@ import java.io.File
 
 @Composable
 fun FloatPlanScreen() {
-    val context = LocalContext.current
-    val scrollState = rememberScrollState()
-    val floatPlan = remember { mutableStateOf(FloatPlan()) }
-    val coroutineScope = rememberCoroutineScope()
+    val profileViewModel: ProfileViewModel = viewModel()
+    val profiles = profileViewModel.profiles.observeAsState(emptyList()).value
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(scrollState)
-            .padding(16.dp)
-    ) {
-        // Example TextFields for fields; add more as needed
-        TextField(
-            value = floatPlan.value.kayakerName,
-            onValueChange = { newValue -> floatPlan.value = floatPlan.value.copy(kayakerName = newValue) },
-            label = { Text("Kayaker Name") }
-        )
-        TextField(
-            value = floatPlan.value.gender,
-            onValueChange = { newValue -> floatPlan.value = floatPlan.value.copy(gender = newValue) },
-            label = { Text("Gender") }
-        )
-        // Add similar TextFields for other FloatPlan fields, e.g.:
-        // TextField(value = floatPlan.value.phoneNumber, onValueChange = { floatPlan.value = floatPlan.value.copy(phoneNumber = it) }, label = { Text("Phone Number") })
-        // For dropdowns (gender, state): Use ExposedDropdownMenuBox
-        // For dates/times: Use DatePicker/TimePicker (import androidx.compose.material3.DatePicker, etc.; may need @ExperimentalMaterial3Api)
+    val selectedKayakers = remember { mutableStateListOf<KayakerProfile>() }
 
-        Button(onClick = {
-            coroutineScope.launch {
-                createAndUploadPdf(context, floatPlan.value)
+    // ... (your existing UI)
+
+    // Add a section to select/add kayakers
+    LazyColumn {
+        items(profiles) { profile ->
+            Button(onClick = { selectedKayakers.add(profile) }) {
+                Text("Add ${profile.name}")
             }
-        }) {
-            Text("Submit Float Plan")
         }
     }
-}
 
+    // When submitting float plan, include selectedKayakers in PDF/Firestore
+    Button(onClick = {
+        coroutineScope.launch {
+            createAndUploadPdf(context, floatPlan.value, selectedKayakers)
+        }
+    }) {
+        Text("Submit Float Plan")
+    }
+}
 private suspend fun createAndUploadPdf(context: Context, floatPlan: FloatPlan) {
     withContext(Dispatchers.IO) {
         try {
@@ -78,7 +73,6 @@ private suspend fun createAndUploadPdf(context: Context, floatPlan: FloatPlan) {
             val pdfDoc = PdfDocument(pdfWriter)
             val document = Document(pdfDoc)
 
-            // Add content as paragraphs (add all fields)
             document.add(Paragraph("Kayaker Name: ${floatPlan.kayakerName}"))
             document.add(Paragraph("Gender: ${floatPlan.gender}"))
             document.add(Paragraph("Phone Number: ${floatPlan.phoneNumber}"))

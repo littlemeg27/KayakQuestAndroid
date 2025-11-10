@@ -22,9 +22,9 @@ data class BottomNavigationItem(
 
 val items = listOf(
     BottomNavigationItem("Home", Icons.Filled.AccountCircle, Icons.Outlined.AccountCircle, false),
-    BottomNavigationItem("Map", Icons.Filled.Place, Icons.Outlined.Place, true),
+    BottomNavigationItem("Map", Icons.Filled.Place, Icons.Outlined.Place, false),
     BottomNavigationItem("Float Plan", Icons.Filled.Create, Icons.Outlined.Create, false),
-    BottomNavigationItem("Weather", Icons.Filled.Warning, Icons.Outlined.Warning, false),
+    BottomNavigationItem("Weather", Icons.Filled.Warning, Icons.Outlined.Warning, true),
     BottomNavigationItem("Settings", Icons.Filled.Settings, Icons.Outlined.Settings, false),
 
 )
