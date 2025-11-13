@@ -103,10 +103,20 @@ fun ProfileScreen(viewModel: ProfileViewModel = viewModel())
         "Spring Green", "Steel", "Steel Camo", "Sunrise Camo", "Tan", "Teal", "White", "Wine Red", "Yellow"
     )
 
+    val vehicleModels  = listOf(
+        "Acura", "Alfa Romeo", "AM General", "Aston Martin", "Audi", "Bentley", "BMW", "Bugatti", "Buick",
+        "Cadillac", "Chevrolet", "Chrysler", "Daewoo", "Dodge", "Eagle", "Ferrari", "FIAT", "Fisker",
+        "Ford", "Genesis", "Geo", "GMC", "Honda", "HUMMER", "Hyundai", "INEOS", "INFINITI", "Isuzu",
+        "Jaguar", "Jeep", "Karma", "Kia", "Lamborghini", "Land Rover", "Lexus", "Lincoln", "Lotus", "Lucid",
+        "Maserati", "Maybach", "Mazda", "McLaren", "Mercedes-Benz", "Mercury", "MINI", "Mitsubishi",
+        "Nissan", "Oldsmobile", "Panoz", "Plymouth", "Pontiac", "Polestar", "Porsche", "Ram", "Rivian",
+        "Rolls-Royce", "Saab", "Saturn", "Scion", "smart", "Spyker", "Subaru", "Suzuki", "Tesla", "Toyota",
+        "VinFast", "Volkswagen", "Volvo"
+    )
 
-    Column(modifier = Modifier.padding(16.dp)) {
 
-
+    Column(modifier = Modifier.padding(16.dp))
+    {
         OutlinedTextField(value = name.value,   onValueChange = { name.value = it },   label = { Text("Name") })
         OutlinedTextField(
             value = age.value,
@@ -126,12 +136,13 @@ fun ProfileScreen(viewModel: ProfileViewModel = viewModel())
         OutlinedTextField(value = vehicleColor.value, onValueChange = { vehicleColor.value = it }, label = { Text("Vehicle Color") })
         OutlinedTextField(value = plateNumber.value,  onValueChange = { plateNumber.value = it },  label = { Text("Plate Number") })
 
-        // ----- Gender Dropdown --------------------------------------------------
+        // ----- Gender Dropdown --------
         var genderExpanded by remember { mutableStateOf(false) }
         ExposedDropdownMenuBox(
             expanded = genderExpanded,
             onExpandedChange = { genderExpanded = !genderExpanded }
-        ) {
+        )
+        {
             OutlinedTextField(
                 readOnly = true,
                 value = gender.value,
@@ -143,7 +154,8 @@ fun ProfileScreen(viewModel: ProfileViewModel = viewModel())
             )
             ExposedDropdownMenu(expanded = genderExpanded, onDismissRequest = { genderExpanded = false }) {
                 genderOptions.forEach { option ->
-                    DropdownMenuItem(text = { Text(option) }, onClick = {
+                    DropdownMenuItem(text = { Text(option) }, onClick =
+                        {
                         gender.value = option
                         genderExpanded = false
                     })
@@ -151,7 +163,7 @@ fun ProfileScreen(viewModel: ProfileViewModel = viewModel())
             }
         }
 
-        // ----- State Dropdown ---------------------------------------------------
+        // ----- State Dropdown --------
         var stateExpanded by remember { mutableStateOf(false) }
         ExposedDropdownMenuBox(
             expanded = stateExpanded,
@@ -166,9 +178,11 @@ fun ProfileScreen(viewModel: ProfileViewModel = viewModel())
                 colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
                 modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryEditable)
             )
-            ExposedDropdownMenu(expanded = stateExpanded, onDismissRequest = { stateExpanded = false }) {
+            ExposedDropdownMenu(expanded = stateExpanded, onDismissRequest = { stateExpanded = false })
+            {
                 stateOptions.forEach { option ->
-                    DropdownMenuItem(text = { Text(option) }, onClick = {
+                    DropdownMenuItem(text = { Text(option) }, onClick =
+                        {
                         state.value = option
                         stateExpanded = false
                     })
@@ -191,9 +205,11 @@ fun ProfileScreen(viewModel: ProfileViewModel = viewModel())
                 colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
                 modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryEditable)
             )
-            ExposedDropdownMenu(expanded = kayakMakeExpanded, onDismissRequest = { kayakMakeExpanded = false }) {
+            ExposedDropdownMenu(expanded = kayakMakeExpanded, onDismissRequest = { kayakMakeExpanded = false })
+            {
                 kayakOptions.forEach { option ->
-                    DropdownMenuItem(text = { Text(option) }, onClick = {
+                    DropdownMenuItem(text = { Text(option) }, onClick =
+                        {
                         kayakMake.value = option
                         kayakMakeExpanded = false
                     })
@@ -201,7 +217,7 @@ fun ProfileScreen(viewModel: ProfileViewModel = viewModel())
             }
         }
 
-        // ----- Kayak Length Dropdown -------------------------------------------
+        // ----- Kayak Length Dropdown ----------
         var kayakLengthExpanded by remember { mutableStateOf(false) }
         ExposedDropdownMenuBox(
             expanded = kayakLengthExpanded,
@@ -216,7 +232,8 @@ fun ProfileScreen(viewModel: ProfileViewModel = viewModel())
                 colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
                 modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryEditable)
             )
-            ExposedDropdownMenu(expanded = kayakLengthExpanded, onDismissRequest = { kayakLengthExpanded = false }) {
+            ExposedDropdownMenu(expanded = kayakLengthExpanded, onDismissRequest = { kayakLengthExpanded = false })
+            {
                 kayakLengths.forEach { option ->
                     DropdownMenuItem(text = { Text(option) }, onClick = {
                         kayakLength.value = option
@@ -226,7 +243,7 @@ fun ProfileScreen(viewModel: ProfileViewModel = viewModel())
             }
         }
 
-        // ----- Kayak Color Dropdown --------------------------------------------
+        // ----- Kayak Color Dropdown -------------
         var kayakColorExpanded by remember { mutableStateOf(false) }
         ExposedDropdownMenuBox(
             expanded = kayakColorExpanded,
@@ -241,9 +258,11 @@ fun ProfileScreen(viewModel: ProfileViewModel = viewModel())
                 colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
                 modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryEditable)
             )
-            ExposedDropdownMenu(expanded = kayakColorExpanded, onDismissRequest = { kayakColorExpanded = false }) {
+            ExposedDropdownMenu(expanded = kayakColorExpanded, onDismissRequest = { kayakColorExpanded = false })
+            {
                 kayakColors.forEach { option ->
-                    DropdownMenuItem(text = { Text(option) }, onClick = {
+                    DropdownMenuItem(text = { Text(option) }, onClick =
+                        {
                         kayakColor.value = option
                         kayakColorExpanded = false
                     })
@@ -251,7 +270,33 @@ fun ProfileScreen(viewModel: ProfileViewModel = viewModel())
             }
         }
 
-        // ----- Save button ------------------------------------------------------
+        // ----- Vehicle Model Dropdown ------------
+        var vehicleModelExpanded by remember { mutableStateOf(false) }
+        ExposedDropdownMenuBox(
+            expanded = vehicleModelExpanded,
+            onExpandedChange = { vehicleModelExpanded = !vehicleModelExpanded }
+        ) {
+            OutlinedTextField(
+                readOnly = true,
+                value = vehicleModel.value,
+                onValueChange = { },
+                label = { Text("Kayak Color") },
+                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = vehicleModelExpanded) },
+                colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
+                modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryEditable)
+            )
+            ExposedDropdownMenu(expanded = vehicleModelExpanded, onDismissRequest = { vehicleModelExpanded = false })
+            {
+                vehicleModels.forEach { option ->
+                    DropdownMenuItem(text = { Text(option) }, onClick =
+                        {
+                        vehicleModel.value = option
+                        vehicleModelExpanded = false
+                    })
+                }
+            }
+        }
+        // ----- Save button --------------
         Button(
             onClick = {
                 val updated = KayakerProfile(
