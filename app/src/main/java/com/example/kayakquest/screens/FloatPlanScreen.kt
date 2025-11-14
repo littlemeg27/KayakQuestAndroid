@@ -32,7 +32,6 @@ import com.itextpdf.kernel.pdf.PdfWriter
 import com.itextpdf.layout.Document
 import com.itextpdf.layout.element.Paragraph
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
@@ -40,32 +39,50 @@ import java.io.File
 
 @Composable
 fun FloatPlanScreen() {
+    val context = LocalContext.current
     val profileViewModel: ProfileViewModel = viewModel()
     val profiles = profileViewModel.profiles.observeAsState(emptyList()).value
 
     val selectedKayakers = remember { mutableStateListOf<KayakerProfile>() }
 
-    // ... (your existing UI)
+    val floatPlan = remember { mutableStateOf(FloatPlan()) }  // Fix unresolved 'floatPlan'
+    val coroutineScope = rememberCoroutineScope()  // Fix coroutineScope invocation
 
-    // Add a section to select/add kayakers
-    LazyColumn {
-        items(profiles) { profile ->
-            Button(onClick = { selectedKayakers.add(profile) }) {
-                Text("Add ${profile.name}")
+    // Example TextField; add more for all fields
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(16.dp)
+    ) {
+        TextField(
+            value = floatPlan.value.kayakerName,
+            onValueChange = { newValue -> floatPlan.value = floatPlan.value.copy(kayakerName = newValue) },
+            label = { Text("Kayaker Name") }
+        )
+        // Add other TextFields similarly...
+
+        // Add a section to select/add kayakers
+        LazyColumn {
+            items(profiles) { profile ->
+                Button(onClick = { selectedKayakers.add(profile) }) {
+                    Text("Add ${profile.name}")  // Fix unresolved 'name' (assume KayakerProfile has 'name')
+                }
             }
         }
-    }
 
-    // When submitting float plan, include selectedKayakers in PDF/Firestore
-    Button(onClick = {
-        coroutineScope.launch {
-            createAndUploadPdf(context, floatPlan.value, selectedKayakers)
+        // When submitting float plan, include selectedKayakers in PDF/Firestore
+        Button(onClick = {
+            coroutineScope.launch {
+                createAndUploadPdf(context, floatPlan.value, selectedKayakers)
+            }
+        }) {
+            Text("Submit Float Plan")
         }
-    }) {
-        Text("Submit Float Plan")
     }
 }
-private suspend fun createAndUploadPdf(context: Context, floatPlan: FloatPlan) {
+
+private suspend fun createAndUploadPdf(context: Context, floatPlan: FloatPlan, selectedKayakers: List<KayakerProfile>) {  // Fix too many args by adding selectedKayakers
     withContext(Dispatchers.IO) {
         try {
             val pdfFile = File(context.filesDir, "float_plan.pdf")
@@ -86,6 +103,15 @@ private suspend fun createAndUploadPdf(context: Context, floatPlan: FloatPlan) {
             document.add(Paragraph("Put In Location: ${floatPlan.putInLocation}"))
             document.add(Paragraph("Take Out Location: ${floatPlan.takeOutLocation}, Return Time: ${floatPlan.returnTime}"))
             document.add(Paragraph("Trip Notes: ${floatPlan.tripNotes}"))
+
+            // Add selected kayakers to PDF
+            selectedKayakers.forEachIndexed { index, kayaker ->
+                document.add(Paragraph("Kayaker ${index + 1}: ${kayaker.name}"))
+                document.add(Paragraph("Gender: ${kayaker.gender}"))
+                document.add(Paragraph("Age: ${kayaker.age}"))
+                document.add(Paragraph("Address: ${kayaker.address}, ${kayaker.city}, ${kayaker.state}"))
+                // Add other kayaker fields as needed
+            }
 
             document.close()
 

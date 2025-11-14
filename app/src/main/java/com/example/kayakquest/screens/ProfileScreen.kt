@@ -114,6 +114,10 @@ fun ProfileScreen(viewModel: ProfileViewModel = viewModel())
         "VinFast", "Volkswagen", "Volvo"
     )
 
+    val vehicleColors  = listOf(
+        "Beige", "Black", "Blue", "Bronze", "Brown", "Gold", "Gray", "Green", "Maroon", "Orange", "Pink",
+        "Purple", "Red", "Silver", "Teal", "White", "Yellow"
+    )
 
     Column(modifier = Modifier.padding(16.dp))
     {
@@ -132,8 +136,6 @@ fun ProfileScreen(viewModel: ProfileViewModel = viewModel())
             onValueChange = { safetyNotes.value = it },
             label = { Text("Safety Equipment Notes") })
         OutlinedTextField(value = vehicleMake.value,  onValueChange = { vehicleMake.value = it },  label = { Text("Vehicle Make") })
-        OutlinedTextField(value = vehicleModel.value, onValueChange = { vehicleModel.value = it }, label = { Text("Vehicle Model") })
-        OutlinedTextField(value = vehicleColor.value, onValueChange = { vehicleColor.value = it }, label = { Text("Vehicle Color") })
         OutlinedTextField(value = plateNumber.value,  onValueChange = { plateNumber.value = it },  label = { Text("Plate Number") })
 
         // ----- Gender Dropdown --------
@@ -293,6 +295,33 @@ fun ProfileScreen(viewModel: ProfileViewModel = viewModel())
                         vehicleModel.value = option
                         vehicleModelExpanded = false
                     })
+                }
+            }
+        }
+
+        // ----- Vehicle Color Dropdown ------------
+        var vehicleColorExpanded by remember { mutableStateOf(false) }
+        ExposedDropdownMenuBox(
+            expanded = vehicleColorExpanded,
+            onExpandedChange = { vehicleColorExpanded = !vehicleColorExpanded }
+        ) {
+            OutlinedTextField(
+                readOnly = true,
+                value = vehicleColor.value,
+                onValueChange = { },
+                label = { Text("Vehicle Color") },
+                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = vehicleColorExpanded) },
+                colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
+                modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryEditable)
+            )
+            ExposedDropdownMenu(expanded = vehicleColorExpanded, onDismissRequest = { vehicleColorExpanded = false })
+            {
+                vehicleColors.forEach { option ->
+                    DropdownMenuItem(text = { Text(option) }, onClick =
+                        {
+                            vehicleColor.value = option
+                            vehicleColorExpanded = false
+                        })
                 }
             }
         }
