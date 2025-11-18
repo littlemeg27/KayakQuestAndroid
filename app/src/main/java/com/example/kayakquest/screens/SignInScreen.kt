@@ -1,25 +1,20 @@
 package com.example.kayakquest.screens
 
 import android.util.Log
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.Button
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.credentials.ClearCredentialStateRequest
+import androidx.compose.ui.unit.dp
 import androidx.credentials.CredentialManager
-import androidx.credentials.CustomCredential
 import androidx.credentials.GetCredentialRequest
 import androidx.credentials.GetCredentialResponse
+import androidx.credentials.exceptions.NoCredentialException
 import com.example.kayakquest.R
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
-import com.google.android.libraries.identity.googleid.GoogleIdTokenParsingException
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
 import kotlinx.coroutines.launch
@@ -28,32 +23,41 @@ import java.security.MessageDigest
 import java.util.UUID
 
 @Composable
-fun SignInScreen()
-{
+fun SignInScreen() {
     val context = LocalContext.current
-    val coroutineScope = rememberCoroutineScope()
+    val scope = rememberCoroutineScope()
     val credentialManager = CredentialManager.create(context)
     val auth = FirebaseAuth.getInstance()
+
+    var errorMessage by remember { mutableStateOf<String?>(null) }
 
     Column(
         modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
-    )
-    {
-        Button(onClick =
-            {
-            coroutineScope.launch {
-                try
-                {
+    ) {
+        Button(onClick = {
+            errorMessage = null
+            scope.launch {
+                try {
                     val result = getGoogleIdTokenCredential(credentialManager, context)
                     handleSignIn(result, auth)
+                } catch (e: NoCredentialException) {
+                    // This is NOT an error – user just canceled
+                    Log.d("SignIn", "User canceled One Tap sign-in")
+                    errorMessage = "Sign-in canceled. Tap again to try."
                 } catch (e: Exception) {
                     Log.e("SignIn", "Sign-in failed", e)
+                    errorMessage = "Sign-in failed. Check internet or try again."
                 }
             }
         }) {
             Text("Sign In with Google")
+        }
+
+        if (errorMessage != null) {
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(text = errorMessage!!, color = MaterialTheme.colorScheme.error)
         }
     }
 }
@@ -62,18 +66,21 @@ private suspend fun getGoogleIdTokenCredential(
     credentialManager: CredentialManager,
     context: android.content.Context
 ): GetCredentialResponse {
-    val request = GetCredentialRequest.Builder()
-        .addCredentialOption(
-            GetGoogleIdOption.Builder()
-                .setFilterByAuthorizedAccounts(false)
-                .setServerClientId(context.getString(R.string.default_web_client_id))
-                .setNonce(generateNonce())
-                .setAutoSelectEnabled(true)
-                .build()
-        )
+    val googleIdOption = GetGoogleIdOption.Builder()
+        .setFilterByAuthorizedAccounts(false)
+        .setServerClientId(context.getString(R.string.default_web_client_id))
+        .setNonce(generateNonce())
+        .setAutoSelectEnabled(true)
         .build()
 
-    return credentialManager.getCredential(request = request, context = context)
+    val request = GetCredentialRequest.Builder()
+        .addCredentialOption(googleIdOption)
+        .build()
+
+    return credentialManager.getCredential(
+        request = request,
+        context = context
+    )
 }
 
 private fun generateNonce(): String {
@@ -86,28 +93,12 @@ private fun generateNonce(): String {
 
 private suspend fun handleSignIn(result: GetCredentialResponse, auth: FirebaseAuth) {
     val credential = result.credential
-    if (credential is CustomCredential) {
-        if (credential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL) {
-            try {
-                val googleIdTokenCredential = GoogleIdTokenCredential.createFrom(credential.data)
-                val authCredential = GoogleAuthProvider.getCredential(googleIdTokenCredential.idToken, null)
-                auth.signInWithCredential(authCredential).await()
-                Log.d("SignIn", "Sign-in successful")
-                // TODO: Navigate to home screen
-            } catch (e: GoogleIdTokenParsingException) {
-                Log.e("SignIn", "Invalid Google ID token", e)
-            }
-        } else {
-            Log.e("SignIn", "Credential is not Google ID token")
-        }
-    } else {
-        Log.e("SignIn", "Credential is not CustomCredential")
-    }
-}
 
-// Optional: Sign Out Function
-private suspend fun signOut(credentialManager: CredentialManager) {
-    credentialManager.clearCredentialState(ClearCredentialStateRequest())
-    FirebaseAuth.getInstance().signOut()
-    Log.d("SignIn", "Signed out")
+    if (credential is com.google.android.libraries.identity.googleid.GoogleIdTokenCredential) {
+        val idToken = credential.idToken
+        val firebaseCredential = GoogleAuthProvider.getCredential(idToken, null)
+        auth.signInWithCredential(firebaseCredential).await()
+        Log.d("SignIn", "Sign-in successful!")
+        // TODO: Navigate to main screen
+    }
 }
