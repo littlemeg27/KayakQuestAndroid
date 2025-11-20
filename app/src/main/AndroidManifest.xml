@@ -17,6 +17,10 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.KayakQuest">
 
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="AIzaSyBtfEbH9LA4YH4Ry_uwEzko9DGejfpmos0" />
+
         <activity
             android:name=".operations.MainActivity"
             android:exported="true">

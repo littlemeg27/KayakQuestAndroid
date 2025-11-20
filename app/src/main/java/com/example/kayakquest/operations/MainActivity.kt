@@ -6,6 +6,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
@@ -50,6 +51,9 @@ class MainActivity : ComponentActivity()
 @Composable
 fun KayakQuestApp()
 {
+    MaterialTheme{
+
+
     val navController = rememberNavController()
     val items = listOf(
         Screen.SignIn,
@@ -98,4 +102,7 @@ fun KayakQuestApp()
             composable("profile") { ProfileScreen() }
         }
     }
+
+    }
+
 }
