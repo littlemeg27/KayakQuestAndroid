@@ -1,57 +1,52 @@
 package com.example.kayakquest.screens
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
+import android.util.Log
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.livedata.observeAsState  // ← THIS WAS MISSING
 import com.example.kayakquest.operations.SelectedPinViewModel
 import com.google.android.gms.maps.model.LatLng
 import kotlinx.coroutines.launch
 import okhttp3.OkHttpClient
+import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
-import retrofit2.Call
-import retrofit2.Response
 import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
+import java.util.*
 import com.example.kayakquest.BuildConfig
-import com.example.kayakquest.weather.WeatherApiService
-import com.example.kayakquest.weather.WeatherbitResponse
-import com.example.kayakquest.weather.WeatherbitHourlyResponse
+import com.example.kayakquest.weather.*
 
 @Composable
 fun WeatherScreen(viewModel: SelectedPinViewModel = viewModel())
 {
-    val selectedPin: LatLng? by viewModel.getSelectedPin().observeAsState(null)
+    val selectedPin by viewModel.getSelectedPin().observeAsState(null)
+    val latLng = selectedPin ?: LatLng(35.227085, -80.843124)  // Charlotte fallback
 
-    val currentWeather = remember { mutableStateOf<WeatherbitResponse?>(null) }
-    val hourlyForecast = remember { mutableStateOf<WeatherbitHourlyResponse?>(null) }
-    val isLoading = remember { mutableStateOf(false) }
-    val errorMsg = remember { mutableStateOf<String?>(null) }
+    var currentWeather by remember { mutableStateOf<WeatherbitResponse?>(null) }
+    var hourlyForecast by remember { mutableStateOf<WeatherbitHourlyResponse?>(null) }
+    var isLoading by remember { mutableStateOf(true) }
+    var error by remember { mutableStateOf<String?>(null) }
+
+
+    val logging = HttpLoggingInterceptor { message -> Log.d("WeatherAPI", message) }
+        .apply { level = HttpLoggingInterceptor.Level.BODY }
 
     val client = OkHttpClient.Builder()
+        .addInterceptor(logging)
         .addInterceptor { chain ->
-            val request = chain.request().newBuilder()
-                .addHeader("x-rapidapi-key", BuildConfig.RAPIDAPI_KEY)
-                .addHeader("x-rapidapi-host", "weatherbit-v1-mashape.p.rapidapi.com")
-                .build()
-            chain.proceed(request)
+            chain.proceed(
+                chain.request().newBuilder()
+                    .addHeader("x-rapidapi-key", BuildConfig.RAPIDAPI_KEY)
+                    .addHeader("x-rapidapi-host", "weatherbit-v1-mashape.p.rapidapi.com")
+                    .build()
+            )
         }
         .build()
 
@@ -62,42 +57,27 @@ fun WeatherScreen(viewModel: SelectedPinViewModel = viewModel())
         .build()
 
     val api = retrofit.create(WeatherApiService::class.java)
-
     val scope = rememberCoroutineScope()
 
-    LaunchedEffect(selectedPin)
-    {
-        val latLng = selectedPin ?: LatLng(35.227085, -80.843124)
-        isLoading.value = true
-        errorMsg.value = null
-
+    LaunchedEffect(latLng) {
+        isLoading = true
+        error = null
         scope.launch {
-            try
-            {
-                val curCall: Call<WeatherbitResponse> = api.getCurrentWeather(
-                    latLng.longitude,
-                    latLng.latitude,
-                    "I"
-                )
-                val curResp: Response<WeatherbitResponse> = curCall.execute()
-                if (curResp.isSuccessful) currentWeather.value = curResp.body()
-                else errorMsg.value = "Current: ${curResp.code()}"
+            try {
+                val cur = api.getCurrentWeather(latLng.longitude, latLng.latitude, "I").execute()
+                val hour = api.getHourlyForecast(latLng.longitude, latLng.latitude, "I", "24").execute()
 
-                val hourCall: Call<WeatherbitHourlyResponse> = api.getHourlyForecast(
-                    latLng.longitude,
-                    latLng.latitude,
-                    "I",
-                    "24"
-                )
-                val hourResp: Response<WeatherbitHourlyResponse> = hourCall.execute()
-                if (hourResp.isSuccessful) hourlyForecast.value = hourResp.body()
-                else errorMsg.value = "Hourly: ${hourResp.code()}"
-            } catch (e: Exception)
-            {
-                errorMsg.value = e.message
-            } finally
-            {
-                isLoading.value = false
+                currentWeather = cur.body()
+                hourlyForecast = hour.body()
+
+                if (currentWeather == null && hourlyForecast == null) {
+                    error = "Empty response – check API key / quota"
+                }
+            } catch (e: Exception) {
+                Log.e("WeatherAPI", "Request failed", e)
+                error = "Network error: ${e.message}"
+            } finally {
+                isLoading = false
             }
         }
     }
@@ -105,42 +85,40 @@ fun WeatherScreen(viewModel: SelectedPinViewModel = viewModel())
     Column(
         modifier = Modifier.fillMaxSize().padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+        verticalArrangement = Arrangement.Top
     ) {
-        if (isLoading.value)
-        {
+        if (isLoading) {
             CircularProgressIndicator()
-        } else if (errorMsg.value != null)
-        {
-            Text(text = errorMsg.value ?: "Unknown error")
-        } else
-        {
-            val cur = currentWeather.value?.data?.firstOrNull() ?: return@Column
-            val hourly = hourlyForecast.value?.data ?: emptyList()
+            Spacer(Modifier.height(16.dp))
+            Text("Loading weather…")
+        } else if (error != null) {
+            Text("Error: $error", color = MaterialTheme.colorScheme.error)
+        } else {
+            val data = currentWeather?.data?.firstOrNull()
+            val forecast = hourlyForecast?.data.orEmpty()
 
-            Column(modifier = Modifier.padding(16.dp)) {
-                Text(text = "Location: ${cur.city_name ?: "Unknown"}")
-                Text(text = "Temp: ${cur.temp?.toInt() ?: 0}°F")
-                Text(text = "Description: ${cur.weather?.description ?: "N/A"}")
-                Text(text = "Humidity: ${cur.rh ?: 0}%")
-                Text(text = "Wind Speed: ${cur.wind_spd ?: 0.0} mph")
-                Text(text = "Pressure: ${cur.pres ?: 0} hPa")
+            if (data != null) {
+                Text("Weather in ${data.city_name}", style = MaterialTheme.typography.headlineMedium)
+                Text("${data.temp?.toInt() ?: 0}°F", style = MaterialTheme.typography.headlineLarge)
+                Text(data.weather?.description ?: "No description")
 
-                LazyRow {
-                    items(hourly) { h ->
-                        Column(modifier = Modifier.padding(8.dp))
-                        {
-                            Text(
-                                text = "Time: ${
-                                    SimpleDateFormat("HH:00", Locale.getDefault())
-                                        .format(Date(h.ts!! * 1000))
-                                }"
-                            )
-                            Text(text = "Temp: ${h.temp?.toInt() ?: 0}°F")
-                            h.weather?.let { wd -> Text(text = wd.description ?: "N/A") }
+                Spacer(Modifier.height(16.dp))
+
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    items(forecast.take(12)) { h ->
+                        Card {
+                            Column(modifier = Modifier.padding(12.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                                Text(SimpleDateFormat("h a", Locale.getDefault()).format(Date(h.ts!! * 1000)))
+                                Text("${h.temp?.toInt() ?: 0}°")
+                                h.weather?.description?.let { Text(it) }
+                            }
                         }
                     }
                 }
+            }
+            else
+            {
+                Text("No weather data")
             }
         }
     }

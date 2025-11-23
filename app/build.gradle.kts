@@ -78,6 +78,7 @@ dependencies {
     implementation("androidx.compose.ui:ui-tooling-preview")
     implementation("androidx.compose.material3:material3")
     implementation("androidx.activity:activity-compose:1.9.2")
+    implementation(libs.androidx.compose.foundation.layout)
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
 
@@ -124,4 +125,6 @@ dependencies {
     androidTestImplementation("androidx.test.ext:junit:1.2.1")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.6.1")
     implementation("com.google.accompanist:accompanist-permissions:0.37.3")
+
+    debugImplementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
 }

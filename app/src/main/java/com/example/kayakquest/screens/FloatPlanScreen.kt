@@ -2,14 +2,17 @@ package com.example.kayakquest.screens
 
 import android.content.Context
 import android.net.Uri
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
@@ -39,53 +42,76 @@ import kotlinx.coroutines.withContext
 import java.io.File
 
 @Composable
-fun FloatPlanScreen() {
+fun FloatPlanScreen()
+{
     val context = LocalContext.current
     val profileViewModel: ProfileViewModel = viewModel()
     val profiles = profileViewModel.profiles.observeAsState(emptyList()).value
 
     val selectedKayakers = remember { mutableStateListOf<KayakerProfile>() }
+    val floatPlan = remember { mutableStateOf(FloatPlan()) }
+    val coroutineScope = rememberCoroutineScope()
 
-    val floatPlan = remember { mutableStateOf(FloatPlan()) }  // Add missing floatPlan state
-    val coroutineScope = rememberCoroutineScope()  // Add for launch
-
-    // Example TextField; add more for all fields
-    Column(
+    LazyColumn(
         modifier = Modifier
             .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(16.dp)
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        TextField(
-            value = floatPlan.value.kayakerName,
-            onValueChange = { newValue -> floatPlan.value = floatPlan.value.copy(kayakerName = newValue) },
-            label = { Text("Kayaker Name") }
-        )
-        // Add other TextFields similarly...
+        // ----- Float Plan Fields -----
+        item {
+            TextField(
+                value = floatPlan.value.kayakerName,
+                onValueChange = { floatPlan.value = floatPlan.value.copy(kayakerName = it) },
+                label = { Text("Kayaker Name") },
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+        // Add more TextFields here the same way...
 
-        // Add a section to select/add kayakers
-        LazyColumn {
-            items(profiles) { profile ->
-                Button(onClick = { selectedKayakers.add(profile) }) {
-                    Text("Add ${profile.name}")  // Fix unresolved 'name' (assume KayakerProfile has 'name')
-                }
+        // ----- Kayaker Selector -----
+        item { Text("Add Kayakers from Profile:", style = MaterialTheme.typography.titleMedium) }
+        items(profiles) { profile ->
+            Button(
+                onClick = { if (!selectedKayakers.contains(profile)) selectedKayakers.add(profile) },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Add ${profile.name}")
             }
         }
 
-        // When submitting float plan, include selectedKayakers in PDF/Firestore
-        Button(onClick = {
-            coroutineScope.launch {
-                createAndUploadPdf(context, floatPlan.value, selectedKayakers)
+        // ----- Selected Kayakers List -----
+        if (selectedKayakers.isNotEmpty()) {
+            item {
+                Text("Selected Kayakers:", style = MaterialTheme.typography.titleMedium)
             }
-        }) {
-            Text("Submit Float Plan")
+            items(selectedKayakers) { kayaker ->
+                Text("• ${kayaker.name} (${kayaker.gender}, ${kayaker.age})")
+            }
+        }
+
+        // ----- Submit Button -----
+        item {
+            Button(
+                onClick = {
+                    coroutineScope.launch {
+                        createAndUploadPdf(context, floatPlan.value, selectedKayakers)
+                    }
+                },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Submit Float Plan")
+            }
         }
     }
 }
 
-private suspend fun createAndUploadPdf(context: Context, floatPlan: FloatPlan, selectedKayakers: List<KayakerProfile>) {  // Fix too many args by adding selectedKayakers
-    withContext(Dispatchers.IO) {
-        try {
+private suspend fun createAndUploadPdf(context: Context, floatPlan: FloatPlan, selectedKayakers: List<KayakerProfile>)
+{
+    withContext(Dispatchers.IO)
+    {
+        try
+        {
             val pdfFile = File(context.filesDir, "float_plan.pdf")
             val pdfWriter = PdfWriter(pdfFile.absolutePath)
             val pdfDoc = PdfDocument(pdfWriter)
@@ -118,7 +144,9 @@ private suspend fun createAndUploadPdf(context: Context, floatPlan: FloatPlan, s
 
             // Save to Firestore
             FirebaseFirestore.getInstance().collection("float_plans").add(floatPlan.toMap()).await()
-        } catch (e: Exception) {
+        }
+        catch (e: Exception)
+        {
             // Handle error, e.g., log or show toast
             e.printStackTrace()
         }
