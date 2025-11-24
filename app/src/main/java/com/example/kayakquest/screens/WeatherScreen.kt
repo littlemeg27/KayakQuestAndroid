@@ -10,49 +10,31 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.compose.runtime.livedata.observeAsState  // ← THIS WAS MISSING
+import androidx.compose.runtime.livedata.observeAsState
 import com.example.kayakquest.operations.SelectedPinViewModel
 import com.google.android.gms.maps.model.LatLng
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import okhttp3.OkHttpClient
-import okhttp3.logging.HttpLoggingInterceptor
+import kotlinx.coroutines.withContext
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.text.SimpleDateFormat
 import java.util.*
-import com.example.kayakquest.BuildConfig
+import com.example.kayakquest.BuildConfig  
 import com.example.kayakquest.weather.*
 
 @Composable
-fun WeatherScreen(viewModel: SelectedPinViewModel = viewModel())
-{
+fun WeatherScreen(viewModel: SelectedPinViewModel = viewModel()) {
     val selectedPin by viewModel.getSelectedPin().observeAsState(null)
-    val latLng = selectedPin ?: LatLng(35.227085, -80.843124)  // Charlotte fallback
+    val latLng = selectedPin ?: LatLng(35.227085, -80.843124)
 
     var currentWeather by remember { mutableStateOf<WeatherbitResponse?>(null) }
     var hourlyForecast by remember { mutableStateOf<WeatherbitHourlyResponse?>(null) }
     var isLoading by remember { mutableStateOf(true) }
     var error by remember { mutableStateOf<String?>(null) }
 
-
-    val logging = HttpLoggingInterceptor { message -> Log.d("WeatherAPI", message) }
-        .apply { level = HttpLoggingInterceptor.Level.BODY }
-
-    val client = OkHttpClient.Builder()
-        .addInterceptor(logging)
-        .addInterceptor { chain ->
-            chain.proceed(
-                chain.request().newBuilder()
-                    .addHeader("x-rapidapi-key", BuildConfig.RAPIDAPI_KEY)
-                    .addHeader("x-rapidapi-host", "weatherbit-v1-mashape.p.rapidapi.com")
-                    .build()
-            )
-        }
-        .build()
-
     val retrofit = Retrofit.Builder()
-        .baseUrl("https://weatherbit-v1-mashape.p.rapidapi.com/")
-        .client(client)
+        .baseUrl("https://api.weatherbit.io/")
         .addConverterFactory(GsonConverterFactory.create())
         .build()
 
@@ -64,17 +46,34 @@ fun WeatherScreen(viewModel: SelectedPinViewModel = viewModel())
         error = null
         scope.launch {
             try {
-                val cur = api.getCurrentWeather(latLng.longitude, latLng.latitude, "I").execute()
-                val hour = api.getHourlyForecast(latLng.longitude, latLng.latitude, "I", "24").execute()
+                val currentResponse = withContext(Dispatchers.IO) {
+                    api.getCurrentWeather(
+                        latLng.latitude,
+                        latLng.longitude,
+                        BuildConfig.WEATHERBIT_KEY,
+                        "I",
+                        "en"
+                    ).execute()
+                }
+                val hourlyResponse = withContext(Dispatchers.IO) {
+                    api.getHourlyForecast(
+                        latLng.latitude,
+                        latLng.longitude,
+                        BuildConfig.WEATHERBIT_KEY,
+                        "I",
+                        24,
+                        "en"
+                    ).execute()
+                }
 
-                currentWeather = cur.body()
-                hourlyForecast = hour.body()
+                currentWeather = currentResponse.body()
+                hourlyForecast = hourlyResponse.body()
 
-                if (currentWeather == null && hourlyForecast == null) {
-                    error = "Empty response – check API key / quota"
+                if (currentWeather?.data.isNullOrEmpty() && hourlyForecast?.data.isNullOrEmpty()) {
+                    error = "Invalid API key or quota exceeded"
                 }
             } catch (e: Exception) {
-                Log.e("WeatherAPI", "Request failed", e)
+                Log.e("Weather", "Failed", e)
                 error = "Network error: ${e.message}"
             } finally {
                 isLoading = false
@@ -89,7 +88,6 @@ fun WeatherScreen(viewModel: SelectedPinViewModel = viewModel())
     ) {
         if (isLoading) {
             CircularProgressIndicator()
-            Spacer(Modifier.height(16.dp))
             Text("Loading weather…")
         } else if (error != null) {
             Text("Error: $error", color = MaterialTheme.colorScheme.error)
@@ -115,9 +113,7 @@ fun WeatherScreen(viewModel: SelectedPinViewModel = viewModel())
                         }
                     }
                 }
-            }
-            else
-            {
+            } else {
                 Text("No weather data")
             }
         }

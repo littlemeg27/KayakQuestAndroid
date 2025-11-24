@@ -8,16 +8,20 @@ interface WeatherApiService
 {
     @GET("v2.0/current")
     fun getCurrentWeather(
-        @Query("lon") lon: Double,
         @Query("lat") lat: Double,
-        @Query("units") units: String = "I"
+        @Query("lon") lon: Double,
+        @Query("key") apiKey: String,
+        @Query("units") units: String = "I",
+        @Query("lang") lang: String = "en"
     ): Call<WeatherbitResponse>
 
     @GET("v2.0/forecast/hourly")
     fun getHourlyForecast(
-        @Query("lon") lon: Double,
         @Query("lat") lat: Double,
+        @Query("lon") lon: Double,
+        @Query("key") apiKey: String,
         @Query("units") units: String = "I",
-        @Query("hours") hours: String = "24"
+        @Query("hours") hours: Int = 24,
+        @Query("lang") lang: String = "en"
     ): Call<WeatherbitHourlyResponse>
 }

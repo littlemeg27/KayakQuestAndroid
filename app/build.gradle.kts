@@ -19,12 +19,13 @@ android {
         versionCode = 1
         versionName = "1.0"
 
+        buildConfigField("String", "WEATHERBIT_KEY", "\"dba23dc82fmsh8c6ec87700d131bp166c0ejsnacce35d3da6d\"")
+
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
             useSupportLibrary = true
         }
-
-        buildConfigField("String", "RAPIDAPI_KEY", "\"dba23dc82fmsh8c6ec87700d131bp166c0ejsnacce35d3da6d\"")
+        buildConfigField("String", "WEATHERBIT_KEY", "\"dba23dc82fmsh8c6ec87700d131bp166c0ejsnacce35d3da6d\"")
         buildConfigField("String", "MAPS_API_KEY", "\"AIzaSyBtfEbH9LA4YH4Ry_uwEzko9DGejfpmos0\"")
     }
 
