@@ -19,13 +19,11 @@ android {
         versionCode = 1
         versionName = "1.0"
 
-        buildConfigField("String", "WEATHERBIT_KEY", "\"dba23dc82fmsh8c6ec87700d131bp166c0ejsnacce35d3da6d\"")
-
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
             useSupportLibrary = true
         }
-        buildConfigField("String", "WEATHERBIT_KEY", "\"dba23dc82fmsh8c6ec87700d131bp166c0ejsnacce35d3da6d\"")
+        buildConfigField("String", "WEATHERBIT_KEY", "\"4abbf7b7bee04946849422a2ba6c716c\"")
         buildConfigField("String", "MAPS_API_KEY", "\"AIzaSyBtfEbH9LA4YH4Ry_uwEzko9DGejfpmos0\"")
     }
 
@@ -126,6 +124,5 @@ dependencies {
     androidTestImplementation("androidx.test.ext:junit:1.2.1")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.6.1")
     implementation("com.google.accompanist:accompanist-permissions:0.37.3")
-
     debugImplementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
 }

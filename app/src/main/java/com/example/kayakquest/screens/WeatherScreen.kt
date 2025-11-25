@@ -6,11 +6,11 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.compose.runtime.livedata.observeAsState
 import com.example.kayakquest.operations.SelectedPinViewModel
 import com.google.android.gms.maps.model.LatLng
 import kotlinx.coroutines.Dispatchers
@@ -20,7 +20,6 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.text.SimpleDateFormat
 import java.util.*
-import com.example.kayakquest.BuildConfig  
 import com.example.kayakquest.weather.*
 
 @Composable
@@ -50,7 +49,7 @@ fun WeatherScreen(viewModel: SelectedPinViewModel = viewModel()) {
                     api.getCurrentWeather(
                         latLng.latitude,
                         latLng.longitude,
-                        BuildConfig.WEATHERBIT_KEY,
+                        "4abbf7b7bee04946849422a2ba6c716c",  // ← YOUR KEY HARD-CODED (TEMPORARY!)
                         "I",
                         "en"
                     ).execute()
@@ -59,7 +58,7 @@ fun WeatherScreen(viewModel: SelectedPinViewModel = viewModel()) {
                     api.getHourlyForecast(
                         latLng.latitude,
                         latLng.longitude,
-                        BuildConfig.WEATHERBIT_KEY,
+                        "4abbf7b7bee04946849422a2ba6c716c",
                         "I",
                         24,
                         "en"
@@ -69,9 +68,6 @@ fun WeatherScreen(viewModel: SelectedPinViewModel = viewModel()) {
                 currentWeather = currentResponse.body()
                 hourlyForecast = hourlyResponse.body()
 
-                if (currentWeather?.data.isNullOrEmpty() && hourlyForecast?.data.isNullOrEmpty()) {
-                    error = "Invalid API key or quota exceeded"
-                }
             } catch (e: Exception) {
                 Log.e("Weather", "Failed", e)
                 error = "Network error: ${e.message}"
@@ -81,10 +77,10 @@ fun WeatherScreen(viewModel: SelectedPinViewModel = viewModel()) {
         }
     }
 
+    // UI stays the same...
     Column(
         modifier = Modifier.fillMaxSize().padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Top
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
         if (isLoading) {
             CircularProgressIndicator()
