@@ -6,11 +6,11 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.compose.runtime.livedata.observeAsState
 import com.example.kayakquest.operations.SelectedPinViewModel
 import com.google.android.gms.maps.model.LatLng
 import kotlinx.coroutines.Dispatchers
@@ -29,15 +29,23 @@ fun WeatherScreen(viewModel: SelectedPinViewModel = viewModel()) {
 
     var currentWeather by remember { mutableStateOf<WeatherbitResponse?>(null) }
     var hourlyForecast by remember { mutableStateOf<WeatherbitHourlyResponse?>(null) }
+    var riverLevels by remember { mutableStateOf<USGSWaterResponse?>(null) }
     var isLoading by remember { mutableStateOf(true) }
     var error by remember { mutableStateOf<String?>(null) }
 
-    val retrofit = Retrofit.Builder()
+    val weatherRetrofit = Retrofit.Builder()
         .baseUrl("https://api.weatherbit.io/")
         .addConverterFactory(GsonConverterFactory.create())
         .build()
 
-    val api = retrofit.create(WeatherApiService::class.java)
+    val usgsRetrofit = Retrofit.Builder()
+        .baseUrl("https://waterservices.usgs.gov/")
+        .addConverterFactory(GsonConverterFactory.create())
+        .build()
+
+    val weatherApi = weatherRetrofit.create(WeatherApiService::class.java)
+    val usgsApi = usgsRetrofit.create(WeatherApiService::class.java)
+
     val scope = rememberCoroutineScope()
 
     LaunchedEffect(latLng) {
@@ -45,28 +53,25 @@ fun WeatherScreen(viewModel: SelectedPinViewModel = viewModel()) {
         error = null
         scope.launch {
             try {
-                val currentResponse = withContext(Dispatchers.IO) {
-                    api.getCurrentWeather(
-                        latLng.latitude,
-                        latLng.longitude,
-                        "4abbf7b7bee04946849422a2ba6c716c",  // ← YOUR KEY HARD-CODED (TEMPORARY!)
-                        "I",
-                        "en"
-                    ).execute()
+                // Current Weather
+                val cur = withContext(Dispatchers.IO) {
+                    weatherApi.getCurrentWeather(latLng.latitude, latLng.longitude, "4abbf7b7bee04946849422a2ba6c716c", "I", "en").execute()
                 }
-                val hourlyResponse = withContext(Dispatchers.IO) {
-                    api.getHourlyForecast(
-                        latLng.latitude,
-                        latLng.longitude,
-                        "4abbf7b7bee04946849422a2ba6c716c",
-                        "I",
-                        24,
-                        "en"
-                    ).execute()
-                }
+                currentWeather = cur.body()
 
-                currentWeather = currentResponse.body()
-                hourlyForecast = hourlyResponse.body()
+                // Hourly Forecast (last 24 hours)
+                val hourly = withContext(Dispatchers.IO) {
+                    weatherApi.getHourlyForecast(latLng.latitude, latLng.longitude, "4abbf7b7bee04946849422a2ba6c716c", "I", 24, "en").execute()
+                }
+                hourlyForecast = hourly.body()
+
+                // River Levels
+                val today = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())
+                val sevenDaysAgo = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date(System.currentTimeMillis() - 7 * 24 * 60 * 60 * 1000L))
+                val water = withContext(Dispatchers.IO) {
+                    usgsApi.getWaterLevels("01646500", sevenDaysAgo, today).execute()
+                }
+                riverLevels = water.body()
 
             } catch (e: Exception) {
                 Log.e("Weather", "Failed", e)
@@ -77,40 +82,65 @@ fun WeatherScreen(viewModel: SelectedPinViewModel = viewModel()) {
         }
     }
 
-    // UI stays the same...
     Column(
         modifier = Modifier.fillMaxSize().padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         if (isLoading) {
             CircularProgressIndicator()
-            Text("Loading weather…")
+            Text("Loading weather & river levels…")
         } else if (error != null) {
             Text("Error: $error", color = MaterialTheme.colorScheme.error)
         } else {
             val data = currentWeather?.data?.firstOrNull()
             val forecast = hourlyForecast?.data.orEmpty()
+            val riverData = riverLevels?.value?.timeSeries?.firstOrNull()?.values?.firstOrNull()?.value.orEmpty()
 
+            // Current Weather
             if (data != null) {
                 Text("Weather in ${data.city_name}", style = MaterialTheme.typography.headlineMedium)
                 Text("${data.temp?.toInt() ?: 0}°F", style = MaterialTheme.typography.headlineLarge)
                 Text(data.weather?.description ?: "No description")
+                Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                    Text("Humidity: ${data.rh ?: 0}%")
+                    Text("Wind: ${data.wind_spd?.toInt() ?: 0} mph")
+                }
+                Spacer(Modifier.height(24.dp))
+            }
 
-                Spacer(Modifier.height(16.dp))
+            // Hourly Forecast
+            Text("Hourly Forecast", style = MaterialTheme.typography.headlineSmall)
+            LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                items(forecast.take(12)) { h ->
+                    Card {
+                        Column(modifier = Modifier.padding(12.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text(SimpleDateFormat("h a", Locale.getDefault()).format(Date(h.ts!! * 1000)))
+                            Text("${h.temp?.toInt() ?: 0}°")
+                            h.weather?.description?.let { Text(it) }
+                        }
+                    }
+                }
+            }
 
+            Spacer(Modifier.height(32.dp))
+
+            // River Levels
+            Text("Catawba River Level (Last 7 Days)", style = MaterialTheme.typography.headlineSmall)
+            if (riverData.isEmpty()) {
+                Text("No river data", color = MaterialTheme.colorScheme.error)
+            } else {
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    items(forecast.take(12)) { h ->
+                    items(riverData.take(7)) { reading ->
                         Card {
                             Column(modifier = Modifier.padding(12.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                                Text(SimpleDateFormat("h a", Locale.getDefault()).format(Date(h.ts!! * 1000)))
-                                Text("${h.temp?.toInt() ?: 0}°")
-                                h.weather?.description?.let { Text(it) }
+                                Text(SimpleDateFormat("MMM dd", Locale.getDefault()).format(
+                                    SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US).parse(reading.dateTime ?: "")!!
+                                ))
+                                Text("${reading.value} ft", style = MaterialTheme.typography.titleLarge)
                             }
                         }
                     }
                 }
-            } else {
-                Text("No weather data")
             }
         }
     }

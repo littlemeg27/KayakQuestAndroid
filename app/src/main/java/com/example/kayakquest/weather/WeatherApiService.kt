@@ -24,4 +24,14 @@ interface WeatherApiService
         @Query("hours") hours: Int = 24,
         @Query("lang") lang: String = "en"
     ): Call<WeatherbitHourlyResponse>
+
+    @GET("nwis/dv/")
+    fun getWaterLevels(
+        @Query("site") site: String,
+        @Query("parameterCd") parameterCd: String = "00065",  // Gage height
+        @Query("startDT") startDate: String,
+        @Query("endDT") endDate: String? = null,
+        @Query("format") format: String = "json"
+    ): Call<USGSWaterResponse>
 }
+
