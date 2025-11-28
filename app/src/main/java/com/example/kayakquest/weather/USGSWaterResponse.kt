@@ -5,19 +5,19 @@ data class USGSWaterResponse(
 )
 
 data class USGSValueContainer(
-    val timeSeries: List<TimeSeries>? = null
+    val timeSeries: List<USGSTimeSeries>? = null
 )
 
-data class TimeSeries(
-    val values: List<ValuesWrapper>? = null
+data class USGSTimeSeries(
+    val values: List<USGSValuesWrapper>? = null
 )
 
-data class ValuesWrapper(
-    val value: List<WaterValue>? = null
+data class USGSValuesWrapper(
+    val value: List<USGSWaterReading>? = null
 )
 
-data class WaterValue(
+data class USGSWaterReading(
     val value: String? = null,
-    val qualifiers: List<String>? = null,
-    val dateTime: String? = null
+    val dateTime: String? = null,
+    val qualifiers: List<String>? = null
 )

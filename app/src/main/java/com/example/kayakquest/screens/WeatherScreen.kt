@@ -59,15 +59,16 @@ fun WeatherScreen(viewModel: SelectedPinViewModel = viewModel()) {
                 }
                 currentWeather = cur.body()
 
-                // Hourly Forecast (last 24 hours)
+                // Hourly Forecast
                 val hourly = withContext(Dispatchers.IO) {
                     weatherApi.getHourlyForecast(latLng.latitude, latLng.longitude, "4abbf7b7bee04946849422a2ba6c716c", "I", 24, "en").execute()
                 }
                 hourlyForecast = hourly.body()
 
-                // River Levels
+                // USGS River Levels
                 val today = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())
                 val sevenDaysAgo = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date(System.currentTimeMillis() - 7 * 24 * 60 * 60 * 1000L))
+
                 val water = withContext(Dispatchers.IO) {
                     usgsApi.getWaterLevels("01646500", sevenDaysAgo, today).execute()
                 }
@@ -92,51 +93,47 @@ fun WeatherScreen(viewModel: SelectedPinViewModel = viewModel()) {
         } else if (error != null) {
             Text("Error: $error", color = MaterialTheme.colorScheme.error)
         } else {
-            val data = currentWeather?.data?.firstOrNull()
+            val weatherData = currentWeather?.data?.firstOrNull()
             val forecast = hourlyForecast?.data.orEmpty()
-            val riverData = riverLevels?.value?.timeSeries?.firstOrNull()?.values?.firstOrNull()?.value.orEmpty()
+            val riverReadings = riverLevels?.value?.timeSeries?.firstOrNull()?.values?.firstOrNull()?.value.orEmpty()
 
             // Current Weather
-            if (data != null) {
-                Text("Weather in ${data.city_name}", style = MaterialTheme.typography.headlineMedium)
-                Text("${data.temp?.toInt() ?: 0}°F", style = MaterialTheme.typography.headlineLarge)
-                Text(data.weather?.description ?: "No description")
-                Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                    Text("Humidity: ${data.rh ?: 0}%")
-                    Text("Wind: ${data.wind_spd?.toInt() ?: 0} mph")
-                }
-                Spacer(Modifier.height(24.dp))
-            }
+            if (weatherData != null) {
+                Text("Weather in ${weatherData.city_name}", style = MaterialTheme.typography.headlineMedium)
+                Text("${weatherData.temp?.toInt() ?: 0}°F", style = MaterialTheme.typography.headlineLarge)
+                Text(weatherData.weather?.description ?: "No description")
 
-            // Hourly Forecast
-            Text("Hourly Forecast", style = MaterialTheme.typography.headlineSmall)
-            LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                items(forecast.take(12)) { h ->
-                    Card {
-                        Column(modifier = Modifier.padding(12.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text(SimpleDateFormat("h a", Locale.getDefault()).format(Date(h.ts!! * 1000)))
-                            Text("${h.temp?.toInt() ?: 0}°")
-                            h.weather?.description?.let { Text(it) }
+                Spacer(Modifier.height(16.dp))
+
+                // Hourly Forecast
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    items(forecast.take(12)) { h ->
+                        Card {
+                            Column(modifier = Modifier.padding(12.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                                Text(SimpleDateFormat("h a", Locale.getDefault()).format(Date(h.ts!! * 1000)))
+                                Text("${h.temp?.toInt() ?: 0}°")
+                                h.weather?.description?.let { Text(it) }
+                            }
                         }
                     }
                 }
-            }
 
-            Spacer(Modifier.height(32.dp))
+                Spacer(Modifier.height(32.dp))
 
-            // River Levels
-            Text("Catawba River Level (Last 7 Days)", style = MaterialTheme.typography.headlineSmall)
-            if (riverData.isEmpty()) {
-                Text("No river data", color = MaterialTheme.colorScheme.error)
-            } else {
-                LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    items(riverData.take(7)) { reading ->
-                        Card {
-                            Column(modifier = Modifier.padding(12.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                                Text(SimpleDateFormat("MMM dd", Locale.getDefault()).format(
-                                    SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US).parse(reading.dateTime ?: "")!!
-                                ))
-                                Text("${reading.value} ft", style = MaterialTheme.typography.titleLarge)
+                // River Levels
+                Text("Catawba River Level (Last 7 Days)", style = MaterialTheme.typography.headlineSmall)
+                if (riverReadings.isEmpty()) {
+                    Text("No river data available", color = MaterialTheme.colorScheme.error)
+                } else {
+                    LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        items(riverReadings.take(7)) { reading ->
+                            Card {
+                                Column(modifier = Modifier.padding(12.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                                    Text(SimpleDateFormat("MMM dd", Locale.getDefault()).format(
+                                        SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US).parse(reading.dateTime ?: "")!!
+                                    ))
+                                    Text("${reading.value} ft", style = MaterialTheme.typography.titleLarge)
+                                }
                             }
                         }
                     }
