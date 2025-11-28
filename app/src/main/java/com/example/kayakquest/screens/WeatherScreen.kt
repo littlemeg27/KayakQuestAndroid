@@ -23,7 +23,8 @@ import java.util.*
 import com.example.kayakquest.weather.*
 
 @Composable
-fun WeatherScreen(viewModel: SelectedPinViewModel = viewModel()) {
+fun WeatherScreen(viewModel: SelectedPinViewModel = viewModel())
+{
     val selectedPin by viewModel.getSelectedPin().observeAsState(null)
     val latLng = selectedPin ?: LatLng(35.227085, -80.843124)
 
@@ -48,36 +49,50 @@ fun WeatherScreen(viewModel: SelectedPinViewModel = viewModel()) {
 
     val scope = rememberCoroutineScope()
 
-    LaunchedEffect(latLng) {
+    LaunchedEffect(latLng)
+    {
         isLoading = true
         error = null
         scope.launch {
-            try {
-                // Current Weather
-                val cur = withContext(Dispatchers.IO) {
+            try
+            {
+                // Weatherbit
+                val currentResponse = withContext(Dispatchers.IO)
+                {
                     weatherApi.getCurrentWeather(latLng.latitude, latLng.longitude, "4abbf7b7bee04946849422a2ba6c716c", "I", "en").execute()
                 }
-                currentWeather = cur.body()
+                currentWeather = currentResponse.body()
 
-                // Hourly Forecast
-                val hourly = withContext(Dispatchers.IO) {
+                val hourlyResponse = withContext(Dispatchers.IO)
+                {
                     weatherApi.getHourlyForecast(latLng.latitude, latLng.longitude, "4abbf7b7bee04946849422a2ba6c716c", "I", 24, "en").execute()
                 }
-                hourlyForecast = hourly.body()
+                hourlyForecast = hourlyResponse.body()
 
-                // USGS River Levels
+                // USGS River Levels — WORKING STATION WITH GAGE HEIGHT DATA
                 val today = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())
                 val sevenDaysAgo = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date(System.currentTimeMillis() - 7 * 24 * 60 * 60 * 1000L))
 
-                val water = withContext(Dispatchers.IO) {
-                    usgsApi.getWaterLevels("01646500", sevenDaysAgo, today).execute()
+                val waterResponse = withContext(Dispatchers.IO)
+                {
+                    usgsApi.getWaterLevels(
+                        site = "02146000",  // ← Catawba River Near Rock Hill, SC — HAS GAGE HEIGHT!
+                        startDate = sevenDaysAgo,
+                        endDate = today
+                    ).execute()
                 }
-                riverLevels = water.body()
+                riverLevels = waterResponse.body()
 
-            } catch (e: Exception) {
+                Log.d("USGS", "River response: ${riverLevels?.value?.timeSeries?.size} series")
+
+            }
+            catch (e: Exception)
+            {
                 Log.e("Weather", "Failed", e)
                 error = "Network error: ${e.message}"
-            } finally {
+            }
+            finally
+            {
                 isLoading = false
             }
         }
@@ -86,27 +101,34 @@ fun WeatherScreen(viewModel: SelectedPinViewModel = viewModel()) {
     Column(
         modifier = Modifier.fillMaxSize().padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        if (isLoading) {
+    )
+    {
+        if (isLoading)
+        {
             CircularProgressIndicator()
             Text("Loading weather & river levels…")
-        } else if (error != null) {
+        }
+        else if (error != null)
+        {
             Text("Error: $error", color = MaterialTheme.colorScheme.error)
-        } else {
+        }
+        else
+        {
             val weatherData = currentWeather?.data?.firstOrNull()
             val forecast = hourlyForecast?.data.orEmpty()
-            val riverReadings = riverLevels?.value?.timeSeries?.firstOrNull()?.values?.firstOrNull()?.value.orEmpty()
+            val riverSeries = riverLevels?.value?.timeSeries?.firstOrNull()?.values?.firstOrNull()?.value.orEmpty()
 
-            // Current Weather
-            if (weatherData != null) {
+            // Weather
+            if (weatherData != null)
+            {
                 Text("Weather in ${weatherData.city_name}", style = MaterialTheme.typography.headlineMedium)
                 Text("${weatherData.temp?.toInt() ?: 0}°F", style = MaterialTheme.typography.headlineLarge)
                 Text(weatherData.weather?.description ?: "No description")
 
                 Spacer(Modifier.height(16.dp))
 
-                // Hourly Forecast
-                LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp))
+                {
                     items(forecast.take(12)) { h ->
                         Card {
                             Column(modifier = Modifier.padding(12.dp), horizontalAlignment = Alignment.CenterHorizontally) {
@@ -119,21 +141,26 @@ fun WeatherScreen(viewModel: SelectedPinViewModel = viewModel()) {
                 }
 
                 Spacer(Modifier.height(32.dp))
+            }
 
-                // River Levels
-                Text("Catawba River Level (Last 7 Days)", style = MaterialTheme.typography.headlineSmall)
-                if (riverReadings.isEmpty()) {
-                    Text("No river data available", color = MaterialTheme.colorScheme.error)
-                } else {
-                    LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        items(riverReadings.take(7)) { reading ->
-                            Card {
-                                Column(modifier = Modifier.padding(12.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                                    Text(SimpleDateFormat("MMM dd", Locale.getDefault()).format(
-                                        SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US).parse(reading.dateTime ?: "")!!
-                                    ))
-                                    Text("${reading.value} ft", style = MaterialTheme.typography.titleLarge)
-                                }
+            // River Levels
+            Text("Catawba River Level (Last 7 Days)", style = MaterialTheme.typography.headlineSmall)
+            if (riverSeries.isEmpty())
+            {
+                Text("No river data available", color = MaterialTheme.colorScheme.error)
+            }
+            else
+            {
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp))
+                {
+                    items(riverSeries.take(7)) { reading ->
+                        Card {
+                            Column(modifier = Modifier.padding(12.dp), horizontalAlignment = Alignment.CenterHorizontally)
+                            {
+                                Text(SimpleDateFormat("MMM dd", Locale.getDefault()).format(
+                                    SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US).parse(reading.dateTime ?: "")!!
+                                ))
+                                Text("${reading.value} ft", style = MaterialTheme.typography.titleLarge)
                             }
                         }
                     }
