@@ -1,22 +1,22 @@
 package com.example.kayakquest.weather
 
 data class USGSWaterResponse(
-    val value: USGSValueContainer? = null
+    val value: USGSValue? = null
 )
 
-data class USGSValueContainer(
-    val timeSeries: List<USGSTimeSeries>? = null
+data class USGSValue(
+    val timeSeries: List<TimeSeries>? = null
 )
 
-data class USGSTimeSeries(
-    val values: List<USGSValuesWrapper>? = null
+data class TimeSeries(
+    val values: List<ValuesWrapper>? = null
 )
 
-data class USGSValuesWrapper(
-    val value: List<USGSWaterReading>? = null
+data class ValuesWrapper(
+    val value: List<WaterValue>? = null
 )
 
-data class USGSWaterReading(
+data class WaterValue(
     val value: String? = null,
     val dateTime: String? = null,
     val qualifiers: List<String>? = null
