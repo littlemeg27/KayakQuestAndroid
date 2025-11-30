@@ -1,6 +1,8 @@
 package com.example.kayakquest.screens
 
 import android.util.Log
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -11,8 +13,11 @@ import androidx.compose.ui.unit.dp
 import androidx.credentials.CredentialManager
 import androidx.credentials.GetCredentialRequest
 import androidx.credentials.GetCredentialResponse
-import androidx.credentials.exceptions.NoCredentialException
+import androidx.credentials.exceptions.GetCredentialException
 import com.example.kayakquest.R
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions
+import com.google.android.gms.common.api.ApiException
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.firebase.auth.FirebaseAuth
@@ -23,82 +28,107 @@ import java.security.MessageDigest
 import java.util.UUID
 
 @Composable
-fun SignInScreen() {
+fun SignInScreen()
+{
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    val credentialManager = CredentialManager.create(context)
     val auth = FirebaseAuth.getInstance()
+    val credentialManager = CredentialManager.create(context)
 
     var errorMessage by remember { mutableStateOf<String?>(null) }
+
+    // Fallback launcher for classic Google Sign-In
+    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
+        try
+        {
+            val account = task.getResult(ApiException::class.java)
+            val credential = GoogleAuthProvider.getCredential(account.idToken, null)
+            scope.launch {
+                auth.signInWithCredential(credential).await()
+                Log.d("SignIn", "Classic sign-in successful")
+            }
+        }
+        catch (e: Exception)
+        {
+            Log.e("SignIn", "Classic sign-in failed", e)
+            errorMessage = "Sign-in failed"
+        }
+    }
 
     Column(
         modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Button(onClick = {
+        Button(onClick =
+            {
             errorMessage = null
             scope.launch {
-                try {
-                    val result = getGoogleIdTokenCredential(credentialManager, context)
-                    handleSignIn(result, auth)
-                } catch (e: NoCredentialException) {
-                    // This is NOT an error – user just canceled
-                    Log.d("SignIn", "User canceled One Tap sign-in")
-                    errorMessage = "Sign-in canceled. Tap again to try."
-                } catch (e: Exception) {
+                try
+                {
+                    // Try One Tap first
+                    val result = credentialManager.getCredential(
+                        request = GetCredentialRequest.Builder()
+                            .addCredentialOption(
+                                GetGoogleIdOption.Builder()
+                                    .setFilterByAuthorizedAccounts(false)
+                                    .setServerClientId(context.getString(R.string.default_web_client_id))
+                                    .setNonce(generateNonce())
+                                    .setAutoSelectEnabled(true)
+                                    .build()
+                            )
+                            .build(),
+                        context = context
+                    )
+                    handleOneTapSignIn(result, auth)
+                } catch (e: GetCredentialException)
+                {
+                    // One Tap failed or canceled — fall back to classic flow
+                    Log.d("SignIn", "One Tap not available, using classic flow")
+                    val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                        .requestIdToken(context.getString(R.string.default_web_client_id))
+                        .requestEmail()
+                        .build()
+                    val client = GoogleSignIn.getClient(context, gso)
+                    launcher.launch(client.signInIntent)
+                }
+                catch (e: Exception)
+                {
                     Log.e("SignIn", "Sign-in failed", e)
-                    errorMessage = "Sign-in failed. Check internet or try again."
+                    errorMessage = "Sign-in failed"
                 }
             }
-        }) {
+        })
+        {
             Text("Sign In with Google")
         }
 
-        if (errorMessage != null) {
+        if (errorMessage != null)
+        {
             Spacer(modifier = Modifier.height(16.dp))
-            Text(text = errorMessage!!, color = MaterialTheme.colorScheme.error)
+            Text(errorMessage!!, color = MaterialTheme.colorScheme.error)
         }
     }
 }
 
-private suspend fun getGoogleIdTokenCredential(
-    credentialManager: CredentialManager,
-    context: android.content.Context
-): GetCredentialResponse {
-    val googleIdOption = GetGoogleIdOption.Builder()
-        .setFilterByAuthorizedAccounts(false)
-        .setServerClientId(context.getString(R.string.default_web_client_id))
-        .setNonce(generateNonce())
-        .setAutoSelectEnabled(true)
-        .build()
-
-    val request = GetCredentialRequest.Builder()
-        .addCredentialOption(googleIdOption)
-        .build()
-
-    return credentialManager.getCredential(
-        request = request,
-        context = context
-    )
+private suspend fun handleOneTapSignIn(result: GetCredentialResponse, auth: FirebaseAuth)
+{
+    val credential = result.credential
+    if (credential is GoogleIdTokenCredential)
+    {
+        val idToken = credential.idToken
+        val firebaseCredential = GoogleAuthProvider.getCredential(idToken, null)
+        auth.signInWithCredential(firebaseCredential).await()
+        Log.d("SignIn", "One Tap sign-in successful!")
+    }
 }
 
-private fun generateNonce(): String {
+private fun generateNonce(): String
+{
     val rawNonce = UUID.randomUUID().toString()
     val bytes = rawNonce.toByteArray()
     val md = MessageDigest.getInstance("SHA-256")
     val digest = md.digest(bytes)
     return digest.fold("") { str, it -> str + "%02x".format(it) }
-}
-
-private suspend fun handleSignIn(result: GetCredentialResponse, auth: FirebaseAuth) {
-    val credential = result.credential
-
-    if (credential is com.google.android.libraries.identity.googleid.GoogleIdTokenCredential) {
-        val idToken = credential.idToken
-        val firebaseCredential = GoogleAuthProvider.getCredential(idToken, null)
-        auth.signInWithCredential(firebaseCredential).await()
-        Log.d("SignIn", "Sign-in successful!")
-        // TODO: Navigate to main screen
-    }
 }

@@ -1,4 +1,7 @@
 <resources>
-    <string name="app_name">KayakQuest</string>
-    <string name="default_web_client_id">YOUR_WEB_CLIENT_ID</string>
+<string name="app_name">Kayak Quest</string>
+
+<!-- GOOGLE SIGN-IN WEB CLIENT ID — ONLY ONE TIME! -->
+<string name="default_web_client_id">YOUR_WEB_CLIENT_ID.apps.googleusercontent.com</string>
+    
 </resources>
