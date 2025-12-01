@@ -12,7 +12,12 @@
           "package_name": "com.example.kayakquest"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "1032912162565-g6jfcr01kta4vanuqh8pin8jjo4d09pb.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyBWJ_Khz3aX1C1o_SqUCOlmHNoZk9LDO0s"
@@ -20,7 +25,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1032912162565-g6jfcr01kta4vanuqh8pin8jjo4d09pb.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }

@@ -10,22 +10,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.credentials.CredentialManager
-import androidx.credentials.GetCredentialRequest
-import androidx.credentials.GetCredentialResponse
-import androidx.credentials.exceptions.GetCredentialException
 import com.example.kayakquest.R
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.ApiException
-import com.google.android.libraries.identity.googleid.GetGoogleIdOption
-import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
+import com.google.firebase.auth.actionCodeSettings
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
-import java.security.MessageDigest
-import java.util.UUID
 
 @Composable
 fun SignInScreen()
@@ -33,26 +26,23 @@ fun SignInScreen()
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val auth = FirebaseAuth.getInstance()
-    val credentialManager = CredentialManager.create(context)
 
-    var errorMessage by remember { mutableStateOf<String?>(null) }
+    var email by remember { mutableStateOf("") }
+    var error by remember { mutableStateOf<String?>(null) }
+    var isSendingLink by remember { mutableStateOf(false) }
 
-    // Fallback launcher for classic Google Sign-In
-    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+    val googleLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
-        try
-        {
-            val account = task.getResult(ApiException::class.java)
+        try {
+            val account = task.getResult(ApiException::class.java)!!
             val credential = GoogleAuthProvider.getCredential(account.idToken, null)
             scope.launch {
                 auth.signInWithCredential(credential).await()
-                Log.d("SignIn", "Classic sign-in successful")
+                Log.d("SignIn", "Google success!")
             }
-        }
-        catch (e: Exception)
-        {
-            Log.e("SignIn", "Classic sign-in failed", e)
-            errorMessage = "Sign-in failed"
+        } catch (e: ApiException) {
+            Log.e("SignIn", "Google failed: ${e.statusCode}", e)
+            error = "Google sign-in failed"
         }
     }
 
@@ -61,74 +51,71 @@ fun SignInScreen()
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Button(onClick =
-            {
-            errorMessage = null
-            scope.launch {
-                try
-                {
-                    // Try One Tap first
-                    val result = credentialManager.getCredential(
-                        request = GetCredentialRequest.Builder()
-                            .addCredentialOption(
-                                GetGoogleIdOption.Builder()
-                                    .setFilterByAuthorizedAccounts(false)
-                                    .setServerClientId(context.getString(R.string.default_web_client_id))
-                                    .setNonce(generateNonce())
-                                    .setAutoSelectEnabled(true)
-                                    .build()
-                            )
-                            .build(),
-                        context = context
-                    )
-                    handleOneTapSignIn(result, auth)
-                } catch (e: GetCredentialException)
-                {
-                    // One Tap failed or canceled — fall back to classic flow
-                    Log.d("SignIn", "One Tap not available, using classic flow")
-                    val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-                        .requestIdToken(context.getString(R.string.default_web_client_id))
-                        .requestEmail()
-                        .build()
-                    val client = GoogleSignIn.getClient(context, gso)
-                    launcher.launch(client.signInIntent)
-                }
-                catch (e: Exception)
-                {
-                    Log.e("SignIn", "Sign-in failed", e)
-                    errorMessage = "Sign-in failed"
-                }
-            }
-        })
-        {
+        // Google Sign-In Button
+        Button(onClick = {
+            error = null
+            val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                .requestIdToken(context.getString(R.string.default_web_client_id))
+                .requestEmail()
+                .build()
+            val client = GoogleSignIn.getClient(context, gso)
+            googleLauncher.launch(client.signInIntent)
+        }) {
             Text("Sign In with Google")
         }
 
-        if (errorMessage != null)
-        {
-            Spacer(modifier = Modifier.height(16.dp))
-            Text(errorMessage!!, color = MaterialTheme.colorScheme.error)
+        Spacer(Modifier.height(16.dp))
+
+        // Email Input
+        OutlinedTextField(
+            value = email,
+            onValueChange = { email = it },
+            label = { Text("Email Address") },
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        Spacer(Modifier.height(16.dp))
+
+        // Email Link Button
+        Button(
+            onClick = {
+                error = null
+                if (email.isBlank()) {
+                    error = "Enter your email"
+                    return@Button
+                }
+                isSendingLink = true
+                scope.launch {
+                    try {
+                        val actionCodeSettings = actionCodeSettings {
+                            url = "https://kayakquest.page.link/signin"
+                            handleCodeInApp = true
+                            setAndroidPackageName("com.example.kayakquest", true, "12")
+                        }
+
+                        auth.sendSignInLinkToEmail(email, actionCodeSettings).await()
+                        Log.d("SignIn", "Email link sent to $email")
+                        error = "Check your email for magic link!"
+                    } catch (e: Exception) {
+                        Log.e("SignIn", "Email link failed", e)
+                        error = "Failed to send email: ${e.message}"
+                    } finally {
+                        isSendingLink = false
+                    }
+                }
+            },
+            enabled = !isSendingLink
+        ) {
+            if (isSendingLink) {
+                Text("Sending...")
+            } else {
+                Text("Sign In with Email Link")
+            }
+        }
+
+        error?.let {
+            Spacer(Modifier.height(16.dp))
+            Text(it, color = MaterialTheme.colorScheme.error)
         }
     }
-}
-
-private suspend fun handleOneTapSignIn(result: GetCredentialResponse, auth: FirebaseAuth)
-{
-    val credential = result.credential
-    if (credential is GoogleIdTokenCredential)
-    {
-        val idToken = credential.idToken
-        val firebaseCredential = GoogleAuthProvider.getCredential(idToken, null)
-        auth.signInWithCredential(firebaseCredential).await()
-        Log.d("SignIn", "One Tap sign-in successful!")
-    }
-}
-
-private fun generateNonce(): String
-{
-    val rawNonce = UUID.randomUUID().toString()
-    val bytes = rawNonce.toByteArray()
-    val md = MessageDigest.getInstance("SHA-256")
-    val digest = md.digest(bytes)
-    return digest.fold("") { str, it -> str + "%02x".format(it) }
 }

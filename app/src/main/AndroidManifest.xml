@@ -19,19 +19,33 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.KayakQuest">
 
-        <meta-data
-            android:name="com.google.android.geo.API_KEY"
-            android:value="AIzaSyBtfEbH9LA4YH4Ry_uwEzko9DGejfpmos0" />
-
+        <!-- ONLY ONE MainActivity — with both intent filters -->
         <activity
             android:name=".operations.MainActivity"
             android:exported="true">
+
+            <!-- Launcher intent -->
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+
+            <!-- Email Link Deep Link -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data
+                    android:scheme="https"
+                    android:host="kayakquest.page.link"
+                    android:pathPrefix="/__/auth/action" />
+            </intent-filter>
         </activity>
+
+        <!-- Google Maps API Key -->
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="AIzaSyBtfEbH9LA4YH4Ry_uwEzko9DGejfpmos0" />
     </application>
 
 </manifest>
