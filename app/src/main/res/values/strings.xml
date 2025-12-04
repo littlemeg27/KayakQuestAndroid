@@ -2,6 +2,6 @@
 <string name="app_name">Kayak Quest</string>
 
 <!-- GOOGLE SIGN-IN WEB CLIENT ID — ONLY ONE TIME! -->
-<string name="default_web_client_id">1032912162565-g6jfcr01kta4vanuqh8pin8jjo4d09pb.apps.googleusercontent.com</string>
+    <string name="default_web_client_id">1032912162565-g6jfcr01kta4vanuqh8pin8jjo4d09pb.apps.googleusercontent.com</string>
 
 </resources>

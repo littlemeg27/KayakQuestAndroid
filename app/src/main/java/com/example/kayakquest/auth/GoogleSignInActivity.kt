@@ -20,7 +20,6 @@ import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.auth.auth
 import com.google.firebase.Firebase
-import com.google.firebase.quickstart.auth.R
 import kotlinx.coroutines.launch
 
 /**

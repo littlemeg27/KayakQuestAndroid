@@ -25,7 +25,6 @@ import com.example.kayakquest.screens.FloatPlanScreen
 import com.example.kayakquest.screens.MapScreen
 import com.example.kayakquest.screens.ProfileScreen
 import com.example.kayakquest.screens.SettingsScreen
-import com.example.kayakquest.screens.SignInScreen
 import com.example.kayakquest.screens.WeatherScreen
 import com.google.firebase.FirebaseApp
 
@@ -105,4 +104,9 @@ fun KayakQuestApp()
 
     }
 
+}
+
+@Composable
+fun SignInScreen() {
+    TODO("Not yet implemented")
 }

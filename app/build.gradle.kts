@@ -127,14 +127,15 @@ dependencies {
     debugImplementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
 
     // Email sign in
-    implementation(platform("com.google.firebase:firebase-bom:33.5.1"))
     implementation("com.google.firebase:firebase-analytics-ktx")
     implementation("com.google.firebase:firebase-auth-ktx")
     implementation("com.google.firebase:firebase-firestore-ktx")
     implementation("com.google.firebase:firebase-storage-ktx")
     implementation("com.google.firebase:firebase-common-ktx")
 
+
     // Phone sign in
     implementation(platform("com.google.firebase:firebase-bom:34.6.0"))
     implementation("com.google.firebase:firebase-auth")
+
 }
