@@ -92,8 +92,8 @@ dependencies {
     // Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
 
-    // Firebase
-    implementation(platform("com.google.firebase:firebase-bom:33.4.0"))
+    // Firebase — ONE BOM, ONE TIME
+    implementation(platform("com.google.firebase:firebase-bom:33.5.1"))
     implementation("com.google.firebase:firebase-analytics-ktx")
     implementation("com.google.firebase:firebase-auth-ktx")
     implementation("com.google.firebase:firebase-firestore-ktx")
@@ -114,7 +114,7 @@ dependencies {
     // iText PDF
     implementation("com.itextpdf:itext7-core:8.0.5")
 
-    // Credential Manager (Modern Google Sign-In)
+    // Credential Manager
     implementation("androidx.credentials:credentials:1.3.0")
     implementation("androidx.credentials:credentials-play-services-auth:1.3.0")
     implementation("com.google.android.libraries.identity.googleid:googleid:1.1.1")
@@ -125,17 +125,5 @@ dependencies {
     androidTestImplementation("androidx.test.espresso:espresso-core:3.6.1")
     implementation("com.google.accompanist:accompanist-permissions:0.37.3")
     debugImplementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
-
-    // Email sign in
-    implementation("com.google.firebase:firebase-analytics-ktx")
-    implementation("com.google.firebase:firebase-auth-ktx")
-    implementation("com.google.firebase:firebase-firestore-ktx")
-    implementation("com.google.firebase:firebase-storage-ktx")
-    implementation("com.google.firebase:firebase-common-ktx")
-
-
-    // Phone sign in
-    implementation(platform("com.google.firebase:firebase-bom:34.6.0"))
-    implementation("com.google.firebase:firebase-auth")
-
+    implementation("com.google.accompanist:accompanist-permissions:0.37.3")
 }

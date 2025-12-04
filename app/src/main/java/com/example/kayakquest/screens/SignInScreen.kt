@@ -25,7 +25,8 @@ import kotlinx.coroutines.tasks.await
 import java.util.concurrent.TimeUnit
 
 @Composable
-fun signInScreen() {  // ← lowercase name (Compose convention)
+fun SignInScreen()
+{
     val context = LocalContext.current
     val activity = context as ComponentActivity
     val scope = rememberCoroutineScope()
