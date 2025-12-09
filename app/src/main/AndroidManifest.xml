@@ -39,6 +39,8 @@
                     android:host="kayakquest.page.link"
                     android:pathPrefix="/__/auth/action" />
             </intent-filter>
+
+
         </activity>
 
         <!-- Google Maps API Key -->

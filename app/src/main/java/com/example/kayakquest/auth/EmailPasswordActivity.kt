@@ -1,103 +1,138 @@
 package com.example.kayakquest.auth
 
-import android.app.Activity
 import android.os.Bundle
 import android.util.Log
-import android.widget.Toast
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.unit.dp
+import com.example.kayakquest.operations.KayakQuestApp
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.FirebaseUser
-import com.google.firebase.auth.auth
-import com.google.firebase.Firebase
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 
-class EmailPasswordActivity : Activity() {
-
-    // [START declare_auth]
+class EmailPasswordActivity : ComponentActivity() {
     private lateinit var auth: FirebaseAuth
-    // [END declare_auth]
 
-    public override fun onCreate(savedInstanceState: Bundle?) {
+    override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        auth = FirebaseAuth.getInstance()
 
-        // [START initialize_auth]
-        // Initialize Firebase Auth
-        auth = Firebase.auth
-        // [END initialize_auth]
-    }
-
-    // [START on_start_check_user]
-    public override fun onStart() {
-        super.onStart()
-        // Check if user is signed in (non-null) and update UI accordingly.
-        val currentUser = auth.currentUser
-        if (currentUser != null) {
-            reload()
+        setContent {
+            EmailPasswordScreen(
+                onSuccess = { finish() }
+            )
         }
     }
-    // [END on_start_check_user]
 
-    private fun createAccount(email: String, password: String) {
-        // [START create_user_with_email]
-        auth.createUserWithEmailAndPassword(email, password)
-            .addOnCompleteListener(this) { task ->
-                if (task.isSuccessful) {
-                    // Sign in success, update UI with the signed-in user's information
-                    Log.d(TAG, "createUserWithEmail:success")
-                    val user = auth.currentUser
-                    updateUI(user)
-                } else {
-                    // If sign in fails, display a message to the user.
-                    Log.w(TAG, "createUserWithEmail:failure", task.exception)
-                    Toast.makeText(
-                        baseContext,
-                        "Authentication failed.",
-                        Toast.LENGTH_SHORT,
-                    ).show()
-                    updateUI(null)
+    @Composable
+    fun EmailPasswordScreen(onSuccess: () -> Unit) {
+        var email by remember { mutableStateOf("") }
+        var password by remember { mutableStateOf("") }
+        var isSignUp by remember { mutableStateOf(false) }
+        var error by remember { mutableStateOf<String?>(null) }
+        var isLoading by remember { mutableStateOf(false) }
+
+        val scope = rememberCoroutineScope()
+
+        Column(
+            modifier = Modifier.fillMaxSize().padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = if (isSignUp) "Create Account" else "Sign In",
+                style = MaterialTheme.typography.headlineMedium
+            )
+            Spacer(Modifier.height(32.dp))
+
+            OutlinedTextField(
+                value = email,
+                onValueChange = { email = it },
+                label = { Text("Email") },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Spacer(Modifier.height(16.dp))
+
+            OutlinedTextField(
+                value = password,
+                onValueChange = { password = it },
+                label = { Text(if (isSignUp) "Password" else "Password") },
+                visualTransformation = PasswordVisualTransformation(),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Spacer(Modifier.height(16.dp))
+
+            Button(
+                onClick = {
+                    if (email.isBlank() || password.isBlank()) {
+                        error = "Enter email and password"
+                        return@Button
+                    }
+                    isLoading = true
+                    scope.launch {
+                        try {
+                            if (isSignUp) {
+                                auth.createUserWithEmailAndPassword(email, password).await()
+                            } else {
+                                auth.signInWithEmailAndPassword(email, password).await()
+                            }
+                            onSuccess()
+                        } catch (e: Exception) {
+                            error = e.message ?: "Authentication failed"
+                        } finally {
+                            isLoading = false
+                        }
+                    }
+                },
+                enabled = !isLoading,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                if (isLoading) {
+                    CircularProgressIndicator(modifier = Modifier.size(20.dp))
+                    Spacer(Modifier.width(8.dp))
                 }
+                Text(if (isSignUp) "Create Account" else "Sign In")
             }
-        // [END create_user_with_email]
-    }
 
-    private fun signIn(email: String, password: String) {
-        // [START sign_in_with_email]
-        auth.signInWithEmailAndPassword(email, password)
-            .addOnCompleteListener(this) { task ->
-                if (task.isSuccessful) {
-                    // Sign in success, update UI with the signed-in user's information
-                    Log.d(TAG, "signInWithEmail:success")
-                    val user = auth.currentUser
-                    updateUI(user)
-                } else {
-                    // If sign in fails, display a message to the user.
-                    Log.w(TAG, "signInWithEmail:failure", task.exception)
-                    Toast.makeText(
-                        baseContext,
-                        "Authentication failed.",
-                        Toast.LENGTH_SHORT,
-                    ).show()
-                    updateUI(null)
-                }
+            Spacer(Modifier.height(16.dp))
+
+            TextButton(onClick = { isSignUp = !isSignUp }) {
+                Text(if (isSignUp) "Have an account? Sign In" else "Don't have an account? Create one")
             }
-        // [END sign_in_with_email]
-    }
 
-    private fun sendEmailVerification() {
-        // [START send_email_verification]
-        val user = auth.currentUser!!
-        user.sendEmailVerification()
-            .addOnCompleteListener(this) { task ->
-                // Email Verification sent
+            Spacer(Modifier.height(16.dp))
+
+            Button(
+                onClick = {
+                    scope.launch {
+                        try {
+                            auth.sendPasswordResetEmail(email).await()
+                            error = "Password reset email sent!"
+                        } catch (e: Exception) {
+                            error = e.message ?: "Reset failed"
+                        }
+                    }
+                },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Forgot Password?")
             }
-        // [END send_email_verification]
-    }
 
-    private fun updateUI(user: FirebaseUser?) {
-    }
-
-    private fun reload() {
-    }
-
-    companion object {
-        private const val TAG = "EmailPassword"
+            error?.let {
+                Spacer(Modifier.height(16.dp))
+                Text(it, color = MaterialTheme.colorScheme.error)
+            }
+        }
     }
 }

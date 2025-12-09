@@ -22,7 +22,7 @@ data class KayakerProfile(
     @PropertyName("vehicleColor") val vehicleColor: String = "",
     @PropertyName("plateNumber") val plateNumber: String = ""
 ) {
-    // Empty constructor for Firestore
+
     constructor() :
             this(
                 "",
