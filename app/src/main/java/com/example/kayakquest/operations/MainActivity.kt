@@ -5,12 +5,7 @@ import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -21,11 +16,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.kayakquest.data.Screen
-import com.example.kayakquest.screens.FloatPlanScreen
-import com.example.kayakquest.screens.MapScreen
-import com.example.kayakquest.screens.ProfileScreen
-import com.example.kayakquest.screens.SettingsScreen
-import com.example.kayakquest.screens.WeatherScreen
+import com.example.kayakquest.screens.*
 import com.google.firebase.FirebaseApp
 
 class MainActivity : ComponentActivity()
@@ -33,16 +24,19 @@ class MainActivity : ComponentActivity()
     override fun onCreate(savedInstanceState: Bundle?)
     {
         super.onCreate(savedInstanceState)
+
         try
         {
             Log.d("MainActivity", "FirebaseApp initialized: ${FirebaseApp.getInstance().name}")
-        }
-        catch (e: Exception)
+        } catch (e: Exception)
         {
             Log.e("MainActivity", "Firebase not initialized", e)
         }
-        setContent{
-            KayakQuestApp()
+
+        setContent {
+            MaterialTheme {
+                KayakQuestApp()
+            }
         }
     }
 }
@@ -50,21 +44,18 @@ class MainActivity : ComponentActivity()
 @Composable
 fun KayakQuestApp()
 {
-    MaterialTheme{
-
-
     val navController = rememberNavController()
+
     val items = listOf(
-        Screen.SignIn,
         Screen.Map,
         Screen.FloatPlan,
         Screen.Weather,
-        Screen.Settings
+        Screen.Settings,
+        Screen.Profile
     )
 
     Scaffold(
-        bottomBar =
-            {
+        bottomBar = {
             NavigationBar {
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
                 val currentDestination = navBackStackEntry?.destination
@@ -93,20 +84,13 @@ fun KayakQuestApp()
             startDestination = Screen.SignIn.route,
             modifier = Modifier.padding(innerPadding)
         ) {
-            composable(Screen.SignIn.route) { SignInScreen() }
+            composable(Screen.SignIn.route) { SignInScreen(navController) }
             composable(Screen.Map.route) { MapScreen() }
             composable(Screen.FloatPlan.route) { FloatPlanScreen() }
             composable(Screen.Weather.route) { WeatherScreen() }
             composable(Screen.Settings.route) { SettingsScreen() }
-            composable("profile") { ProfileScreen() }
+            composable(Screen.Profile.route) { ProfileScreen() }
         }
     }
-
-    }
-
 }
 
-@Composable
-fun SignInScreen() {
-    TODO("Not yet implemented")
-}

@@ -78,6 +78,7 @@ dependencies {
     implementation("androidx.compose.material3:material3")
     implementation("androidx.activity:activity-compose:1.9.2")
     implementation(libs.androidx.compose.foundation.layout)
+    implementation(libs.androidx.webkit)
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
 
