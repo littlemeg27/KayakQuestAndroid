@@ -15,7 +15,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.kayakquest.data.KayakerProfile
-import com.example.kayakquest.viewmodels.ProfileViewModel
+import com.example.kayakquest.profile.ProfileViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -138,15 +138,6 @@ fun ProfileScreen(viewModel: ProfileViewModel = viewModel())
             label = { Text("Age") },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
         )
-        OutlinedTextField(value = address.value,onValueChange = { address.value = it },label = { Text("Address") })
-        OutlinedTextField(value = city.value,   onValueChange = { city.value = it },   label = { Text("City") })
-        OutlinedTextField(value = email.value,  onValueChange = { email.value = it },  label = { Text("Email") })
-        OutlinedTextField(value = phone.value,  onValueChange = { phone.value = it },  label = { Text("Phone") })
-        OutlinedTextField(value = safetyNotes.value,
-            onValueChange = { safetyNotes.value = it },
-            label = { Text("Safety Equipment Notes") })
-        OutlinedTextField(value = vehicleMake.value,  onValueChange = { vehicleMake.value = it },  label = { Text("Vehicle Make") })
-        OutlinedTextField(value = plateNumber.value,  onValueChange = { plateNumber.value = it },  label = { Text("Plate Number") })
 
         // ----- Gender Dropdown --------
         var genderExpanded by remember { mutableStateOf(false) }
@@ -168,12 +159,21 @@ fun ProfileScreen(viewModel: ProfileViewModel = viewModel())
                 genderOptions.forEach { option ->
                     DropdownMenuItem(text = { Text(option) }, onClick =
                         {
-                        gender.value = option
-                        genderExpanded = false
-                    })
+                            gender.value = option
+                            genderExpanded = false
+                        })
                 }
             }
         }
+
+        OutlinedTextField(value = phone.value,  onValueChange = { phone.value = it },  label = { Text("Phone") })
+        OutlinedTextField(value = email.value,  onValueChange = { email.value = it },  label = { Text("Email") })
+        OutlinedTextField(value = address.value,onValueChange = { address.value = it },label = { Text("Address") })
+        OutlinedTextField(value = city.value,   onValueChange = { city.value = it },   label = { Text("City") })
+
+
+        OutlinedTextField(value = name.value,   onValueChange = { name.value = it },   label = { Text("Emergency Contact Name") })
+        OutlinedTextField(value = phone.value,  onValueChange = { phone.value = it },  label = { Text("Emergency Phone") })
 
         // ----- State Dropdown --------
         var stateExpanded by remember { mutableStateOf(false) }
@@ -195,12 +195,20 @@ fun ProfileScreen(viewModel: ProfileViewModel = viewModel())
                 stateOptions.forEach { option ->
                     DropdownMenuItem(text = { Text(option) }, onClick =
                         {
-                        state.value = option
-                        stateExpanded = false
-                    })
+                            state.value = option
+                            stateExpanded = false
+                        })
                 }
             }
         }
+
+
+        OutlinedTextField(value = safetyNotes.value,
+            onValueChange = { safetyNotes.value = it },
+            label = { Text("Safety Equipment Notes") })
+        OutlinedTextField(value = vehicleMake.value,  onValueChange = { vehicleMake.value = it },  label = { Text("Vehicle Make") })
+        OutlinedTextField(value = plateNumber.value,  onValueChange = { plateNumber.value = it },  label = { Text("Plate Number") })
+
 
         // ----- Kayak Make Dropdown ---------------------------------------------
         var kayakMakeExpanded by remember { mutableStateOf(false) }
@@ -292,7 +300,7 @@ fun ProfileScreen(viewModel: ProfileViewModel = viewModel())
                 readOnly = true,
                 value = vehicleModel.value,
                 onValueChange = { },
-                label = { Text("Kayak Color") },
+                label = { Text("Vehicle Model Make") },
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = vehicleModelExpanded) },
                 colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
                 modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryEditable)
