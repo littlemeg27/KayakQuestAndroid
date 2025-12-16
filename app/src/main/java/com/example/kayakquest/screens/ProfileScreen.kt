@@ -1,11 +1,15 @@
 package com.example.kayakquest.screens
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -17,8 +21,8 @@ import com.example.kayakquest.viewmodels.ProfileViewModel
 @Composable
 fun ProfileScreen(viewModel: ProfileViewModel = viewModel())
 {
-
     val profile by viewModel.profile.observeAsState(null)
+    val scrollState = rememberScrollState()
 
     val userId   = remember { mutableStateOf(profile?.userId   ?: "") }
     val name     = remember { mutableStateOf(profile?.name     ?: "") }
@@ -119,7 +123,13 @@ fun ProfileScreen(viewModel: ProfileViewModel = viewModel())
         "Purple", "Red", "Silver", "Teal", "White", "Yellow"
     )
 
-    Column(modifier = Modifier.padding(16.dp))
+    Column(
+        modifier = Modifier
+            .padding(16.dp)
+            .fillMaxSize()
+            .verticalScroll(scrollState)
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally)
     {
         OutlinedTextField(value = name.value,   onValueChange = { name.value = it },   label = { Text("Name") })
         OutlinedTextField(
