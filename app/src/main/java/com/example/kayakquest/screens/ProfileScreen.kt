@@ -343,6 +343,7 @@ fun ProfileScreen(viewModel: ProfileViewModel = viewModel())
                 }
             }
         }
+
         // ----- Save button --------------
         Button(
             onClick = {
