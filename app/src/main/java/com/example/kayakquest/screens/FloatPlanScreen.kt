@@ -10,6 +10,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
@@ -49,6 +50,25 @@ fun FloatPlanScreen()
     val floatPlan = remember { mutableStateOf(FloatPlan()) }
     val coroutineScope = rememberCoroutineScope()
 
+    val userId   = remember { mutableStateOf(profile?.userId   ?: "") }
+    val name     = remember { mutableStateOf(profile?.name     ?: "") }
+    val gender   = remember { mutableStateOf(profile?.gender   ?: "") }
+    val age      = remember { mutableStateOf(profile?.age?.toString() ?: "") }
+    val address  = remember { mutableStateOf(profile?.address  ?: "") }
+    val city     = remember { mutableStateOf(profile?.city     ?: "") }
+    val state    = remember { mutableStateOf(profile?.state    ?: "") }
+    val email    = remember { mutableStateOf(profile?.email    ?: "") }
+    val phone    = remember { mutableStateOf(profile?.phone    ?: "") }
+    val kayakMake = remember { mutableStateOf(profile?.kayakMake ?: "") }
+    val kayakModel = remember { mutableStateOf(profile?.kayakModel ?: "") }
+    val kayakLength = remember { mutableStateOf(profile?.kayakLength ?: "") }
+    val kayakColor = remember { mutableStateOf(profile?.kayakColor ?: "") }
+    val safetyNotes = remember { mutableStateOf(profile?.safetyEquipmentNotes ?: "") }
+    val vehicleMake = remember { mutableStateOf(profile?.vehicleMake ?: "") }
+    val vehicleModel = remember { mutableStateOf(profile?.vehicleModel ?: "") }
+    val vehicleColor = remember { mutableStateOf(profile?.vehicleColor ?: "") }
+    val plateNumber = remember { mutableStateOf(profile?.plateNumber ?: "") }
+
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
@@ -65,6 +85,12 @@ fun FloatPlanScreen()
             )
         }
         // Add more TextFields here the same way...
+
+        OutlinedTextField(value = safetyNotes.value,
+            onValueChange = { safetyNotes.value = it },
+            label = { Text("Safety Equipment Notes") })
+        OutlinedTextField(value = vehicleMake.value,  onValueChange = { vehicleMake.value = it },  label = { Text("Vehicle Make") })
+        OutlinedTextField(value = plateNumber.value,  onValueChange = { plateNumber.value = it },  label = { Text("Plate Number") })
 
         // ----- Kayaker Selector -----
         item { Text("Add Kayakers from Profile:", style = MaterialTheme.typography.titleMedium) }

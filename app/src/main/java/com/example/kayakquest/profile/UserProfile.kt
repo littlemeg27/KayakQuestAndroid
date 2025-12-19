@@ -1,7 +1,5 @@
 package com.example.kayakquest.profile
 
-import com.google.firebase.firestore.PropertyName
-
 data class UserProfile(
     val userId: String = "",              // Firebase Auth UID
     val photoUrl: String? = null,
@@ -24,10 +22,6 @@ data class UserProfile(
     val vehicleModel: String = "",
     val vehicleColor: String = "",
     val plateNumber: String = "",
-
-
-    val vehicleModel: String = "",
-
     val favoriteRiver: String = "",
     val totalTrips: Int = 0,
     val totalDistanceKm: Double = 0.0,
