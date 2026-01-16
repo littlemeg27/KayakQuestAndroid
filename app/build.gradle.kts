@@ -76,6 +76,7 @@ dependencies {
     implementation("androidx.compose.ui:ui-graphics")
     implementation("androidx.compose.ui:ui-tooling-preview")
     implementation("androidx.compose.material3:material3")
+    implementation("androidx.compose.material:material-icons-extended")
     implementation("androidx.activity:activity-compose:1.9.2")
     implementation(libs.androidx.compose.foundation.layout)
     implementation(libs.androidx.webkit)
@@ -126,5 +127,4 @@ dependencies {
     androidTestImplementation("androidx.test.espresso:espresso-core:3.6.1")
     implementation("com.google.accompanist:accompanist-permissions:0.37.3")
     debugImplementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
-    implementation("com.google.accompanist:accompanist-permissions:0.37.3")
 }

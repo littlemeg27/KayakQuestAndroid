@@ -7,13 +7,12 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AccessTime
 import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.kayakquest.data.KayakerProfile
@@ -34,6 +33,7 @@ import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FloatPlanScreen(viewModel: ProfileViewModel = viewModel()) {
     val context = LocalContext.current
@@ -43,15 +43,16 @@ fun FloatPlanScreen(viewModel: ProfileViewModel = viewModel()) {
     val floatPlan = remember { mutableStateOf(FloatPlan()) }
     val coroutineScope = rememberCoroutineScope()
 
-    var showDatePicker by remember { mutableStateOf(false) }
-    var showTimePicker by remember { mutableStateOf(false) }
+    var showDepartureDatePicker by remember { mutableStateOf(false) }
+    var showReturnTimePicker by remember { mutableStateOf(false) }
 
-    // Pre-fill safety notes from the current user's profile (if available)
+    // Pre-fill safety notes from current user profile if available
     LaunchedEffect(profiles) {
-        val currentUserProfile = profiles.find { it.userId == FirebaseAuth.getInstance().currentUser?.uid }
-        if (currentUserProfile != null) {
+        val currentUserId = FirebaseAuth.getInstance().currentUser?.uid
+        val userProfile = profiles.find { it.userId == currentUserId }
+        userProfile?.let { profile ->
             floatPlan.value = floatPlan.value.copy(
-                safetyEquipmentNotes = currentUserProfile.safetyEquipmentNotes
+                safetyEquipmentNotes = profile.safetyEquipmentNotes
             )
         }
     }
@@ -72,7 +73,7 @@ fun FloatPlanScreen(viewModel: ProfileViewModel = viewModel()) {
             OutlinedTextField(
                 value = floatPlan.value.safetyEquipmentNotes,
                 onValueChange = { floatPlan.value = floatPlan.value.copy(safetyEquipmentNotes = it) },
-                label = { Text("List of Safety Equipment on Board") },
+                label = { Text("Safety Equipment on Board") },
                 modifier = Modifier.fillMaxWidth(),
                 maxLines = 5
             )
@@ -86,30 +87,33 @@ fun FloatPlanScreen(viewModel: ProfileViewModel = viewModel()) {
                 label = { Text("Departure Date") },
                 readOnly = true,
                 trailingIcon = {
-                    IconButton(onClick = { showDatePicker = true }) {
-                        Icon(Icons.Default.DateRange, contentDescription = "Select Date")
+                    IconButton(onClick = { showDepartureDatePicker = true }) {
+                        Icon(
+                            imageVector = Icons.Filled.DateRange,
+                            contentDescription = "Select departure date"
+                        )
                     }
                 },
                 modifier = Modifier.fillMaxWidth()
             )
         }
 
-        // Departure Location
+        // Departure / Put-in Location
         item {
             OutlinedTextField(
-                value = floatPlan.value.departureLocation,
-                onValueChange = { floatPlan.value = floatPlan.value.copy(departureLocation = it) },
-                label = { Text("Departure Location") },
+                value = floatPlan.value.putInLocation,
+                onValueChange = { floatPlan.value = floatPlan.value.copy(putInLocation = it) },
+                label = { Text("Departure / Put-in Location") },
                 modifier = Modifier.fillMaxWidth()
             )
         }
 
-        // Destination
+        // Destination / Take-out Location
         item {
             OutlinedTextField(
-                value = floatPlan.value.destination,
-                onValueChange = { floatPlan.value = floatPlan.value.copy(destination = it) },
-                label = { Text("Destination") },
+                value = floatPlan.value.takeOutLocation,
+                onValueChange = { floatPlan.value = floatPlan.value.copy(takeOutLocation = it) },
+                label = { Text("Destination / Take-out Location") },
                 modifier = Modifier.fillMaxWidth()
             )
         }
@@ -117,35 +121,40 @@ fun FloatPlanScreen(viewModel: ProfileViewModel = viewModel()) {
         // Estimated Time of Return
         item {
             OutlinedTextField(
-                value = floatPlan.value.estimatedReturnTime,
+                value = floatPlan.value.returnTime,
                 onValueChange = { },
                 label = { Text("Estimated Time of Return") },
                 readOnly = true,
                 trailingIcon = {
-                    IconButton(onClick = { showTimePicker = true }) {
-                        Icon(Icons.Default.AccessTime, contentDescription = "Select Time")
+                    IconButton(onClick = { showReturnTimePicker = true }) {
+                        Icon(
+                            imageVector = Icons.Filled.Schedule,
+                            contentDescription = "Select estimated return time"
+                        )
                     }
                 },
                 modifier = Modifier.fillMaxWidth()
             )
         }
 
-        // Other Trip Details
+        // Other Trip Details / Notes
         item {
             OutlinedTextField(
-                value = floatPlan.value.otherDetails,
-                onValueChange = { floatPlan.value = floatPlan.value.copy(otherDetails = it) },
-                label = { Text("Other Trip Details") },
+                value = floatPlan.value.tripNotes,
+                onValueChange = { floatPlan.value = floatPlan.value.copy(tripNotes = it) },
+                label = { Text("Other Trip Details / Notes") },
                 modifier = Modifier.fillMaxWidth(),
                 maxLines = 5
             )
         }
 
-        // Add Kayakers from Profiles
+        // Add Participants (Kayakers) from Profiles
         item {
-            Text("Add Kayakers from Profiles", style = MaterialTheme.typography.titleMedium)
+            Spacer(Modifier.height(16.dp))
+            Text("Add Participants from Profiles", style = MaterialTheme.typography.titleMedium)
             Spacer(Modifier.height(8.dp))
         }
+
         items(profiles) { profile ->
             Button(
                 onClick = { if (!selectedKayakers.contains(profile)) selectedKayakers.add(profile) },
@@ -155,10 +164,10 @@ fun FloatPlanScreen(viewModel: ProfileViewModel = viewModel()) {
             }
         }
 
-        // Selected Kayakers List
         if (selectedKayakers.isNotEmpty()) {
             item {
-                Text("Selected Kayakers:", style = MaterialTheme.typography.titleMedium)
+                Spacer(Modifier.height(16.dp))
+                Text("Selected Participants:", style = MaterialTheme.typography.titleMedium)
                 Spacer(Modifier.height(8.dp))
             }
             items(selectedKayakers) { kayaker ->
@@ -166,7 +175,7 @@ fun FloatPlanScreen(viewModel: ProfileViewModel = viewModel()) {
             }
         }
 
-        // Submit Button
+        // Submit / Generate PDF
         item {
             Spacer(Modifier.height(24.dp))
             Button(
@@ -175,19 +184,24 @@ fun FloatPlanScreen(viewModel: ProfileViewModel = viewModel()) {
                         createAndUploadPdf(context, floatPlan.value, selectedKayakers)
                     }
                 },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                enabled = floatPlan.value.departureDate.isNotBlank() &&
+                        floatPlan.value.putInLocation.isNotBlank() &&
+                        floatPlan.value.takeOutLocation.isNotBlank()
             ) {
-                Text("Submit Float Plan")
+                Text("Generate & Submit Float Plan")
             }
         }
     }
 
-    // Date Picker Dialog
-    if (showDatePicker) {
+    // ───────────────────────────────────────────────
+    //   Date Picker Dialog
+    // ───────────────────────────────────────────────
+    if (showDepartureDatePicker) {
         val datePickerState = rememberDatePickerState()
         AlertDialog(
-            onDismissRequest = { showDatePicker = false },
-            title = { Text("Select Departure Date") },
+            onDismissRequest = { showDepartureDatePicker = false },
+            title = { Text("Departure Date") },
             text = { DatePicker(state = datePickerState) },
             confirmButton = {
                 TextButton(onClick = {
@@ -195,33 +209,43 @@ fun FloatPlanScreen(viewModel: ProfileViewModel = viewModel()) {
                         val date = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date(millis))
                         floatPlan.value = floatPlan.value.copy(departureDate = date)
                     }
-                    showDatePicker = false
+                    showDepartureDatePicker = false
                 }) { Text("OK") }
             },
-            dismissButton = { TextButton(onClick = { showDatePicker = false }) { Text("Cancel") } }
+            dismissButton = {
+                TextButton(onClick = { showDepartureDatePicker = false }) { Text("Cancel") }
+            }
         )
     }
 
-    // Time Picker Dialog
-    if (showTimePicker) {
+    // ───────────────────────────────────────────────
+    //   Time Picker Dialog (for return time)
+    // ───────────────────────────────────────────────
+    if (showReturnTimePicker) {
         val timePickerState = rememberTimePickerState()
         AlertDialog(
-            onDismissRequest = { showTimePicker = false },
-            title = { Text("Select Estimated Return Time") },
+            onDismissRequest = { showReturnTimePicker = false },
+            title = { Text("Estimated Return Time") },
             text = { TimePicker(state = timePickerState) },
             confirmButton = {
                 TextButton(onClick = {
                     val time = String.format("%02d:%02d", timePickerState.hour, timePickerState.minute)
-                    floatPlan.value = floatPlan.value.copy(estimatedReturnTime = time)
-                    showTimePicker = false
+                    floatPlan.value = floatPlan.value.copy(returnTime = time)
+                    showReturnTimePicker = false
                 }) { Text("OK") }
             },
-            dismissButton = { TextButton(onClick = { showTimePicker = false }) { Text("Cancel") } }
+            dismissButton = {
+                TextButton(onClick = { showReturnTimePicker = false }) { Text("Cancel") }
+            }
         )
     }
 }
 
-private suspend fun createAndUploadPdf(context: Context, floatPlan: FloatPlan, selectedKayakers: List<KayakerProfile>) {
+private suspend fun createAndUploadPdf(
+    context: Context,
+    floatPlan: FloatPlan,
+    selectedKayakers: List<KayakerProfile>
+) {
     withContext(Dispatchers.IO) {
         try {
             val pdfFile = File(context.filesDir, "float_plan_${System.currentTimeMillis()}.pdf")
@@ -229,18 +253,23 @@ private suspend fun createAndUploadPdf(context: Context, floatPlan: FloatPlan, s
             val pdfDoc = PdfDocument(pdfWriter)
             val document = Document(pdfDoc)
 
-            document.add(Paragraph("Float Plan").setBold())
-            document.add(Paragraph("Safety Equipment on Board: ${floatPlan.safetyEquipmentNotes}"))
-            document.add(Paragraph("Departure Date: ${floatPlan.departureDate}"))
-            document.add(Paragraph("Departure Location: ${floatPlan.departureLocation}"))
-            document.add(Paragraph("Destination: ${floatPlan.destination}"))
-            document.add(Paragraph("Estimated Time of Return: ${floatPlan.estimatedReturnTime}"))
-            document.add(Paragraph("Other Trip Details: ${floatPlan.otherDetails}"))
+            document.add(Paragraph("Float Plan").setBold().setFontSize(18f))
 
-            document.add(Paragraph("\nSelected Kayakers:").setBold())
-            selectedKayakers.forEachIndexed { index, kayaker ->
-                document.add(Paragraph("Kayaker ${index + 1}: ${kayaker.name ?: "Unnamed"}"))
-                document.add(Paragraph("---"))
+            document.add(Paragraph("Safety Equipment on Board:\n${floatPlan.safetyEquipmentNotes}"))
+            document.add(Paragraph("Departure Date: ${floatPlan.departureDate}"))
+            document.add(Paragraph("Departure / Put-in Location: ${floatPlan.putInLocation}"))
+            document.add(Paragraph("Destination / Take-out Location: ${floatPlan.takeOutLocation}"))
+            document.add(Paragraph("Estimated Time of Return: ${floatPlan.returnTime}"))
+            document.add(Paragraph("Other Trip Details / Notes:\n${floatPlan.tripNotes}"))
+
+            if (selectedKayakers.isNotEmpty()) {
+                document.add(Paragraph("\nParticipants:").setBold())
+                selectedKayakers.forEachIndexed { index, kayaker ->
+                    document.add(Paragraph("Participant ${index + 1}: ${kayaker.name ?: "Unnamed"}"))
+                    document.add(Paragraph("   • Gender: ${kayaker.gender}, Age: ${kayaker.age}"))
+                    document.add(Paragraph("   • Safety Notes: ${kayaker.safetyEquipmentNotes}"))
+                    document.add(Paragraph("---"))
+                }
             }
 
             document.close()
@@ -251,14 +280,17 @@ private suspend fun createAndUploadPdf(context: Context, floatPlan: FloatPlan, s
             val pdfRef = storageRef.child("float_plans/$userId/${pdfFile.name}")
             pdfRef.putFile(Uri.fromFile(pdfFile)).await()
 
-            val uri = pdfRef.downloadUrl.await()
-            floatPlan.pdfUrl = uri.toString()
+            val downloadUrl = pdfRef.downloadUrl.await().toString()
+            floatPlan.pdfUrl = downloadUrl
 
-            FirebaseFirestore.getInstance().collection("float_plans").add(floatPlan.toMap()).await()
+            FirebaseFirestore.getInstance()
+                .collection("float_plans")
+                .add(floatPlan.toMap())
+                .await()
 
-            Log.d("FloatPlan", "PDF uploaded: $uri")
+            Log.d("FloatPlan", "PDF created & uploaded: $downloadUrl")
         } catch (e: Exception) {
-            Log.e("FloatPlan", "Error", e)
+            Log.e("FloatPlan", "PDF creation/upload failed", e)
         }
     }
 }
