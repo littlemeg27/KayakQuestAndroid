@@ -35,7 +35,6 @@ fun ProfileScreen(viewModel: ProfileViewModel = viewModel())
     var kayakModel by remember { mutableStateOf("") }
     var kayakLength by remember { mutableStateOf("") }
     var kayakColor by remember { mutableStateOf("") }
-    var safetyNotes by remember { mutableStateOf("") }
     var vehicleMake by remember { mutableStateOf("") }
     var vehicleModel by remember { mutableStateOf("") }
     var vehicleColor by remember { mutableStateOf("") }
@@ -55,7 +54,6 @@ fun ProfileScreen(viewModel: ProfileViewModel = viewModel())
         kayakModel = profile?.kayakModel ?: ""
         kayakLength = profile?.kayakLength ?: ""
         kayakColor = profile?.kayakColor ?: ""
-        safetyNotes = profile?.safetyEquipmentNotes ?: ""
         vehicleMake = profile?.vehicleMake ?: ""
         vehicleModel = profile?.vehicleModel ?: ""
         vehicleColor = profile?.vehicleColor ?: ""
@@ -128,7 +126,8 @@ fun ProfileScreen(viewModel: ProfileViewModel = viewModel())
         Spacer(Modifier.height(24.dp))
 
         // Personal Information Section
-        ProfileSection("Personal Information") {
+        ProfileSection("Personal Information")
+        {
             EditableField("Name", name) { name = it }
             DropdownField("Gender", gender, genderOptions) { gender = it }
             EditableField("Age", age, KeyboardType.Number) { age = it.filter { c -> c.isDigit() } }
@@ -140,16 +139,17 @@ fun ProfileScreen(viewModel: ProfileViewModel = viewModel())
         }
 
         // Kayak Details Section
-        ProfileSection("Kayak Details") {
+        ProfileSection("Kayak Details")
+        {
             DropdownField("Kayak Make", kayakMake, kayakOptions) { kayakMake = it }
             DropdownField("Kayak Length", kayakLength, kayakLengths) { kayakLength = it }
             DropdownField("Kayak Color", kayakColor, kayakColors) { kayakColor = it }
             EditableField("Kayak Model", kayakModel) { kayakModel = it }
-            EditableField("Safety Equipment Notes", safetyNotes, multiline = true) { safetyNotes = it }
         }
 
         // Vehicle Information Section
-        ProfileSection("Vehicle Information") {
+        ProfileSection("Vehicle Information")
+        {
             DropdownField("Vehicle Make", vehicleMake, vehicleModels) { vehicleMake = it }
             EditableField("Vehicle Model", vehicleModel) { vehicleModel = it }
             DropdownField("Vehicle Color", vehicleColor, vehicleColors) { vehicleColor = it }
@@ -174,7 +174,6 @@ fun ProfileScreen(viewModel: ProfileViewModel = viewModel())
                 kayakModel = kayakModel,
                 kayakLength = kayakLength,
                 kayakColor = kayakColor,
-                safetyEquipmentNotes = safetyNotes,
                 vehicleMake = vehicleMake,
                 vehicleModel = vehicleModel,
                 vehicleColor = vehicleColor,
@@ -191,7 +190,8 @@ fun ProfileScreen(viewModel: ProfileViewModel = viewModel())
 
 // Reusable Section Card
 @Composable
-fun ProfileSection(title: String, content: @Composable ColumnScope.() -> Unit) {
+fun ProfileSection(title: String, content: @Composable ColumnScope.() -> Unit)
+{
     Card(
         modifier = Modifier
             .fillMaxWidth()
