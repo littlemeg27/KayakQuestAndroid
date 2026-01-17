@@ -35,13 +35,18 @@ fun ProfileScreen(viewModel: ProfileViewModel = viewModel())
     var kayakModel by remember { mutableStateOf("") }
     var kayakLength by remember { mutableStateOf("") }
     var kayakColor by remember { mutableStateOf("") }
+    var paddleBoardMake by remember { mutableStateOf("") }
+    var paddleBoardModel by remember { mutableStateOf("") }
+    var paddleBoardLength by remember { mutableStateOf("") }
+    var paddleBoardColor by remember { mutableStateOf("") }
     var vehicleMake by remember { mutableStateOf("") }
     var vehicleModel by remember { mutableStateOf("") }
     var vehicleColor by remember { mutableStateOf("") }
     var plateNumber by remember { mutableStateOf("") }
 
     // Sync local state when profile loads/changes
-    LaunchedEffect(profile) {
+    LaunchedEffect(profile)
+    {
         name = profile?.name ?: ""
         gender = profile?.gender ?: ""
         age = profile?.age?.toString() ?: ""
@@ -54,6 +59,10 @@ fun ProfileScreen(viewModel: ProfileViewModel = viewModel())
         kayakModel = profile?.kayakModel ?: ""
         kayakLength = profile?.kayakLength ?: ""
         kayakColor = profile?.kayakColor ?: ""
+        paddleBoardMake = profile?.kayakMake ?: ""
+        paddleBoardModel = profile?.kayakModel ?: ""
+        paddleBoardLength = profile?.kayakLength ?: ""
+        paddleBoardColor = profile?.kayakColor ?: ""
         vehicleMake = profile?.vehicleMake ?: ""
         vehicleModel = profile?.vehicleModel ?: ""
         vehicleColor = profile?.vehicleColor ?: ""
@@ -100,6 +109,36 @@ fun ProfileScreen(viewModel: ProfileViewModel = viewModel())
         "Quill", "Red", "Red Hibiscus", "Red/Cedar", "Seagrass Green", "Slate Blue", "Solar Yellow",
         "Spring Green", "Steel", "Steel Camo", "Sunrise Camo", "Tan", "Teal", "White", "Wine Red", "Yellow"
     )
+    val paddleBoardOptions = listOf(
+        "3D SUP", "6'6' SUP", "Aqua Marina", "Aquaglide", "Atoll Board Company", "BARTON", "BIC Sport",
+        "Boardworks", "BOTE", "C4 Waterman", "Cascadia Board Co.", "Core", "Cruiser SUP", "Dragonfly SUP",
+        "Fanatic", "GILI Sports", "Glide SUP", "Goosehill", "Hala Gear", "Hobie", "Honu", "Hydrus",
+        "iRocker", "Isle Surf & SUP", "Jobe", "JP Australia (JP SUP)", "Kokopelli", "Loon Paddle Company",
+        "Mistral", "Naish", "NRS", "NSP (North Shore Paddle)", "Pau Hana", "Paddle North", "Quatro",
+        "Red Paddle Co.", "Retrospec", "Sea Eagle", "SIC Maui", "Spinera", "Starboard", "Sunova", "Surftech",
+        "Tahe Outdoors", "Thurso Surf", "Tiki Factory", "Tower Paddle Boards", "WOw",
+    )
+    val paddleBoardLengths = listOf(
+        "7'0", "7'6", "7'9", "8'0", "8'2", "8'4", "8'6", "8'8", "9'0", "9'2", "9'4", "9'6", "9'8", "9'10",
+        "10'0", "10'2", "10'4", "10'6", "10'8", "10'9", "10'10", "11'0", "11'2", "11'3", "11'4", "11'5",
+        "11'6", "11'7", "11'8", "11'9", "11'10", "12'0", "12'1", "12'2", "12'3", "12'4", "12'6", "12'7",
+        "12'8", "12'9", "12'10", "13'0", "13'2", "13'4", "13'6", "13'8", "13'10", "14'0", "14'2", "14'3",
+        "14'4", "14'5", "14'6", "14'8", "14'10", "15'0", "15'6", "16'0", "16'6", "17'0", "18'0"
+    )
+    val paddleBoardColors = listOf(
+        "Bamboo/Wood Finish", "Beige/Tan", "Black", "Black + White", "Blue (Navy, Royal, Sky, Teal, Cobalt, Midnight)",
+        "Blue + White", "Brown", "Camo (various shades: Woodland, Desert, Digital)",
+        "Camouflage (Camo) – Woodland, Desert, Digital, Pink Camo", "Carbon Fiber (actual or printed)",
+        "Carbon Fiber + Color Accents (e.g., Carbon + Red, Carbon + Blue)", "Carbon Fiber Look (Black with weave pattern)",
+        "Clear (see-through with colored deck pad)", "Clear (transparent deck pad)", "Flamingo/Beach Vibes",
+        "Galaxy/Starry Night", "Geometric Patterns", "Gloss", "Glow-in-the-Dark", "Gray (Light Gray, Dark Gray, Charcoal)",
+        "Gray + White", "Green (Forest, Lime, Seafoam, Sage, Emerald)", "Green + White", "Marble/Swirl",
+        "Matte", "Military/Tactical", "Olive", "Orange", "Pink (Hot Pink, Blush, Coral)", "Purple (Violet, Lavender)",
+        "Rainbow", "Red", "Red + White", "Retro / 80s Neon", "Satin", "Shark / Ocean Creature Prints",
+        "Silver/Metallic Silver", "Sunset Gradient", "Tie-Dye", "Tribal/Polynesian", "Tropical/Palm Leaf Prints",
+        "Turquoise/Aqua", "Unicorn/Pastel Rainbow", "UV Reactive/Color-Changing", "White", "Wood Grain/Wood Look",
+        "Yellow (Bright, Mustard, Lemon)",
+    )
     val vehicleModels = listOf(
         "Acura", "Alfa Romeo", "AM General", "Aston Martin", "Audi", "Bentley", "BMW", "Bugatti", "Buick",
         "Cadillac", "Chevrolet", "Chrysler", "Daewoo", "Dodge", "Eagle", "Ferrari", "FIAT", "Fisker",
@@ -138,6 +177,15 @@ fun ProfileScreen(viewModel: ProfileViewModel = viewModel())
             DropdownField("State", state, stateOptions) { state = it }
         }
 
+        // Vehicle Information Section
+        ProfileSection("Vehicle Information")
+        {
+            DropdownField("Vehicle Make", vehicleMake, vehicleModels) { vehicleMake = it }
+            EditableField("Vehicle Model", vehicleModel) { vehicleModel = it }
+            DropdownField("Vehicle Color", vehicleColor, vehicleColors) { vehicleColor = it }
+            EditableField("Plate Number", plateNumber) { plateNumber = it }
+        }
+
         // Kayak Details Section
         ProfileSection("Kayak Details")
         {
@@ -147,13 +195,13 @@ fun ProfileScreen(viewModel: ProfileViewModel = viewModel())
             EditableField("Kayak Model", kayakModel) { kayakModel = it }
         }
 
-        // Vehicle Information Section
-        ProfileSection("Vehicle Information")
+        // Kayak Details Section
+        ProfileSection("PaddleBoard Details")
         {
-            DropdownField("Vehicle Make", vehicleMake, vehicleModels) { vehicleMake = it }
-            EditableField("Vehicle Model", vehicleModel) { vehicleModel = it }
-            DropdownField("Vehicle Color", vehicleColor, vehicleColors) { vehicleColor = it }
-            EditableField("Plate Number", plateNumber) { plateNumber = it }
+            DropdownField("PaddleBoard Make", paddleBoardMake, paddleBoardOptions) { paddleBoardMake = it }
+            DropdownField("PaddleBoard Length", paddleBoardLength, paddleBoardLengths) { paddleBoardLength = it }
+            DropdownField("PaddleBoard Color", paddleBoardColor, paddleBoardColors) { paddleBoardColor = it }
+            EditableField("PaddleBoard Model", paddleBoardModel) { paddleBoardModel = it }
         }
 
         Spacer(Modifier.height(32.dp))
@@ -174,13 +222,18 @@ fun ProfileScreen(viewModel: ProfileViewModel = viewModel())
                 kayakModel = kayakModel,
                 kayakLength = kayakLength,
                 kayakColor = kayakColor,
+                paddleBoardMake = paddleBoardMake,
+                paddleBoardModel = paddleBoardModel,
+                paddleBoardLength = paddleBoardLength,
+                paddleBoardColor = paddleBoardColor,
                 vehicleMake = vehicleMake,
                 vehicleModel = vehicleModel,
                 vehicleColor = vehicleColor,
                 plateNumber = plateNumber
             )
             viewModel.saveProfile(updatedProfile)
-        }) {
+        })
+        {
             Text("Save Profile")
         }
 
@@ -198,7 +251,8 @@ fun ProfileSection(title: String, content: @Composable ColumnScope.() -> Unit)
             .padding(vertical = 8.dp),
         elevation = CardDefaults.cardElevation(4.dp)
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
+        Column(modifier = Modifier.padding(16.dp))
+        {
             Text(title, style = MaterialTheme.typography.titleMedium)
             Spacer(Modifier.height(16.dp))
             content()
@@ -236,7 +290,8 @@ fun DropdownField(
 ) {
     var expanded by remember { mutableStateOf(false) }
 
-    ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = !expanded }) {
+    ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = !expanded })
+    {
         OutlinedTextField(
             readOnly = true,
             value = value,
@@ -248,9 +303,11 @@ fun DropdownField(
                 .fillMaxWidth()
                 .menuAnchor(MenuAnchorType.PrimaryEditable)
         )
-        ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+        ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false })
+        {
             options.forEach { option ->
-                DropdownMenuItem(text = { Text(option) }, onClick = {
+                DropdownMenuItem(text = { Text(option) }, onClick =
+                    {
                     onSelect(option)
                     expanded = false
                 })
