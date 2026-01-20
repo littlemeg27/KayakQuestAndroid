@@ -4,6 +4,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -11,6 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.kayakquest.data.CraftEntry
 import com.example.kayakquest.data.KayakerProfile
 import com.example.kayakquest.profile.ProfileViewModel
 
@@ -19,32 +22,30 @@ import com.example.kayakquest.profile.ProfileViewModel
 fun ProfileScreen(viewModel: ProfileViewModel = viewModel())
 {
     val profile by viewModel.profile.collectAsState()
-
     val scrollState = rememberScrollState()
 
-    // Local state for editable fields
-    var name by remember { mutableStateOf("") }
-    var gender by remember { mutableStateOf("") }
-    var age by remember { mutableStateOf("") }
-    var address by remember { mutableStateOf("") }
-    var city by remember { mutableStateOf("") }
-    var state by remember { mutableStateOf("") }
-    var email by remember { mutableStateOf("") }
-    var phone by remember { mutableStateOf("") }
-    var kayakMake by remember { mutableStateOf("") }
-    var kayakModel by remember { mutableStateOf("") }
-    var kayakLength by remember { mutableStateOf("") }
-    var kayakColor by remember { mutableStateOf("") }
-    var paddleBoardMake by remember { mutableStateOf("") }
-    var paddleBoardModel by remember { mutableStateOf("") }
-    var paddleBoardLength by remember { mutableStateOf("") }
-    var paddleBoardColor by remember { mutableStateOf("") }
-    var vehicleMake by remember { mutableStateOf("") }
-    var vehicleModel by remember { mutableStateOf("") }
-    var vehicleColor by remember { mutableStateOf("") }
-    var plateNumber by remember { mutableStateOf("") }
+    // Personal & vehicle fields
+    var name by remember { mutableStateOf(profile?.name ?: "") }
+    var gender by remember { mutableStateOf(profile?.gender ?: "") }
+    var age by remember { mutableStateOf(profile?.age?.toString() ?: "") }
+    var address by remember { mutableStateOf(profile?.address ?: "") }
+    var city by remember { mutableStateOf(profile?.city ?: "") }
+    var state by remember { mutableStateOf(profile?.state ?: "") }
+    var email by remember { mutableStateOf(profile?.email ?: "") }
+    var phone by remember { mutableStateOf(profile?.phone ?: "") }
+    var vehicleMake by remember { mutableStateOf(profile?.vehicleMake ?: "") }
+    var vehicleModel by remember { mutableStateOf(profile?.vehicleModel ?: "") }
+    var vehicleColor by remember { mutableStateOf(profile?.vehicleColor ?: "") }
+    var plateNumber by remember { mutableStateOf(profile?.plateNumber ?: "") }
 
-    // Sync local state when profile loads/changes
+    // Craft lists (multiple entries)
+    val kayaks = remember { mutableStateListOf<CraftEntry>() }
+    val canoes = remember { mutableStateListOf<CraftEntry>() }
+    val paddleBoards = remember { mutableStateListOf<CraftEntry>() }
+
+    var activeCraftType by remember { mutableStateOf<String?>(null) }
+
+    // Sync from loaded profile
     LaunchedEffect(profile)
     {
         name = profile?.name ?: ""
@@ -55,21 +56,21 @@ fun ProfileScreen(viewModel: ProfileViewModel = viewModel())
         state = profile?.state ?: ""
         email = profile?.email ?: ""
         phone = profile?.phone ?: ""
-        kayakMake = profile?.kayakMake ?: ""
-        kayakModel = profile?.kayakModel ?: ""
-        kayakLength = profile?.kayakLength ?: ""
-        kayakColor = profile?.kayakColor ?: ""
-        paddleBoardMake = profile?.kayakMake ?: ""
-        paddleBoardModel = profile?.kayakModel ?: ""
-        paddleBoardLength = profile?.kayakLength ?: ""
-        paddleBoardColor = profile?.kayakColor ?: ""
         vehicleMake = profile?.vehicleMake ?: ""
         vehicleModel = profile?.vehicleModel ?: ""
         vehicleColor = profile?.vehicleColor ?: ""
         plateNumber = profile?.plateNumber ?: ""
+
+        kayaks.clear()
+        kayaks.addAll(profile?.craftEntries?.filter { it.type == "Kayak" } ?: emptyList())
+
+        canoes.clear()
+        canoes.addAll(profile?.craftEntries?.filter { it.type == "Canoe" } ?: emptyList())
+
+        paddleBoards.clear()
+        paddleBoards.addAll(profile?.craftEntries?.filter { it.type == "PaddleBoard" } ?: emptyList())
     }
 
-    // Your full dropdown options
     val genderOptions = listOf("Male", "Female")
     val stateOptions = listOf(
         "Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado", "Connecticut", "Delaware",
@@ -109,6 +110,36 @@ fun ProfileScreen(viewModel: ProfileViewModel = viewModel())
         "Quill", "Red", "Red Hibiscus", "Red/Cedar", "Seagrass Green", "Slate Blue", "Solar Yellow",
         "Spring Green", "Steel", "Steel Camo", "Sunrise Camo", "Tan", "Teal", "White", "Wine Red", "Yellow"
     )
+    val canoeOptions = listOf(
+        "Adirondack Canoe Co.", "Advanced Elements", "AIRE", "Apache", "Atikokan Canoe","Bell Canoe Works",
+        "Bluewater Canoe", "Buffalo Canoes Manufacturing", "Carrying Place Canoe & Boat Works",
+        "Chestnut (historical, now reproduced)", "Clipper Canoes", "CNA", "Colden Canoe", "Coleman",
+        "Composite Creations", "Dagger", "Dogpaddle Canoe Works", "Esquif", "Fletcher Canoes",
+        "Golden Hawk Canoes", "Grumman", "H2O Canoe Company", "Hemlock Canoe Works", "Hou", "H2O",
+        "Kruger", "Langford Canoes", "Linder", "Lincoln Canoe and Kayak", "Mad River Canoe",
+        "Merrimack Canoe Company", "Navarro Canoe Co.", "Nighthawk Canoes", "Northstar Canoes",
+        "Nova Craft Canoe", "Oak Orchard Canoe Kayak Experts", "Old Town Canoe", "Pelican",
+        "Sanborn Canoe Co.", "Silverbirch", "Souris River Canoes", "Swift Canoe & Kayak",
+        "T-Formex (material, used by several)", "Wenonah Canoe", "WOw"
+    )
+    val canoeLengths = listOf(
+        "10'0", "10'6", "11'0", "11'6", "12'0", "12'6", "13'0", "13'6", "14'0", "14'6", "14'10", "15'0",
+        "15'6", "16'0", "16'6", "16'8", "16'10", "17'0", "17'6", "18'0", "18'6", "19'0", "20'0", "20'6",
+        "22'0", "23'0", "25'0"
+    )
+    val canoeColors = listOf(
+        "Beige/Tan/Sand", "Black", "Black/White", "Blue (Royal Blue, Navy, Sky Blue, Teal, Cobalt)",
+        "Blue/Black", "Blue/White", "Brown", "Burgundy", "Camo (Woodland, Desert, Digital, Mossy Oak)",
+        "Camo/Black", "Camo/Olive", "Camouflage (various patterns: Realtree, Mossy Oak, Kryptek)",
+        "Carbon Fiber Look (black with visible weave)", "Clear", "Desert Camo/Brown",
+        "Gray (Light Gray, Charcoal)", "Green (Forest Green, Olive, Sage, Lime)", "Green/Black",
+        "Green/White", "Hunter Green", "Marble/Swirl (premium composite canoes)",
+        "Metallic (Silver, Gold, Bronze – rare)", "Military/Tactical (dark camo or OD green)",
+        "Olive Drab", "Orange", "Orange/Black", "Purple (rare)", "Red", "Red/Black",
+        "Red/Gold (premium models)", "Red/White", "Retro/Classic (e.g., red with white gunwales)",
+        "White", "Wood Grain/Wood Look (real wood or realistic print)", "Woodland Camo/Tan", "Yellow",
+        "Yellow/Green"
+    )
     val paddleBoardOptions = listOf(
         "3D SUP", "6'6' SUP", "Aqua Marina", "Aquaglide", "Atoll Board Company", "BARTON", "BIC Sport",
         "Boardworks", "BOTE", "C4 Waterman", "Cascadia Board Co.", "Core", "Cruiser SUP", "Dragonfly SUP",
@@ -116,7 +147,7 @@ fun ProfileScreen(viewModel: ProfileViewModel = viewModel())
         "iRocker", "Isle Surf & SUP", "Jobe", "JP Australia (JP SUP)", "Kokopelli", "Loon Paddle Company",
         "Mistral", "Naish", "NRS", "NSP (North Shore Paddle)", "Pau Hana", "Paddle North", "Quatro",
         "Red Paddle Co.", "Retrospec", "Sea Eagle", "SIC Maui", "Spinera", "Starboard", "Sunova", "Surftech",
-        "Tahe Outdoors", "Thurso Surf", "Tiki Factory", "Tower Paddle Boards", "WOw",
+        "Tahe Outdoors", "Thurso Surf", "Tiki Factory", "Tower Paddle Boards", "WOw"
     )
     val paddleBoardLengths = listOf(
         "7'0", "7'6", "7'9", "8'0", "8'2", "8'4", "8'6", "8'8", "9'0", "9'2", "9'4", "9'6", "9'8", "9'10",
@@ -137,7 +168,7 @@ fun ProfileScreen(viewModel: ProfileViewModel = viewModel())
         "Rainbow", "Red", "Red + White", "Retro / 80s Neon", "Satin", "Shark / Ocean Creature Prints",
         "Silver/Metallic Silver", "Sunset Gradient", "Tie-Dye", "Tribal/Polynesian", "Tropical/Palm Leaf Prints",
         "Turquoise/Aqua", "Unicorn/Pastel Rainbow", "UV Reactive/Color-Changing", "White", "Wood Grain/Wood Look",
-        "Yellow (Bright, Mustard, Lemon)",
+        "Yellow (Bright, Mustard, Lemon)"
     )
     val vehicleModels = listOf(
         "Acura", "Alfa Romeo", "AM General", "Aston Martin", "Audi", "Bentley", "BMW", "Bugatti", "Buick",
@@ -164,7 +195,7 @@ fun ProfileScreen(viewModel: ProfileViewModel = viewModel())
         Text("Your KayakQuest Profile", style = MaterialTheme.typography.headlineLarge)
         Spacer(Modifier.height(24.dp))
 
-        // Personal Information Section
+        // Personal Information
         ProfileSection("Personal Information")
         {
             EditableField("Name", name) { name = it }
@@ -177,7 +208,7 @@ fun ProfileScreen(viewModel: ProfileViewModel = viewModel())
             DropdownField("State", state, stateOptions) { state = it }
         }
 
-        // Vehicle Information Section
+        // Vehicle Information
         ProfileSection("Vehicle Information")
         {
             DropdownField("Vehicle Make", vehicleMake, vehicleModels) { vehicleMake = it }
@@ -186,30 +217,135 @@ fun ProfileScreen(viewModel: ProfileViewModel = viewModel())
             EditableField("Plate Number", plateNumber) { plateNumber = it }
         }
 
-        // Kayak Details Section
-        ProfileSection("Kayak Details")
+        Spacer(Modifier.height(32.dp))
+
+        // Add Craft Buttons (only visible part initially)
+        Text("Add Watercraft", style = MaterialTheme.typography.titleMedium)
+        Spacer(Modifier.height(12.dp))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceEvenly
+        )
         {
-            DropdownField("Kayak Make", kayakMake, kayakOptions) { kayakMake = it }
-            DropdownField("Kayak Length", kayakLength, kayakLengths) { kayakLength = it }
-            DropdownField("Kayak Color", kayakColor, kayakColors) { kayakColor = it }
-            EditableField("Kayak Model", kayakModel) { kayakModel = it }
+            Button(onClick = { activeCraftType = "Kayak" }) { Text("Add Kayak") }
+            Button(onClick = { activeCraftType = "Canoe" }) { Text("Add Canoe") }
+            Button(onClick = { activeCraftType = "PaddleBoard" }) { Text("Add PaddleBoard") }
         }
 
-        // Kayak Details Section
-        ProfileSection("PaddleBoard Details")
+        Spacer(Modifier.height(24.dp))
+
+        // Show form ONLY when a type is selected
+        activeCraftType?.let { type ->
+            ProfileSection("$type Details")
+            {
+                var newName by remember { mutableStateOf("") }
+                var newMake by remember { mutableStateOf("") }
+                var newModel by remember { mutableStateOf("") }
+                var newLength by remember { mutableStateOf("") }
+                var newColor by remember { mutableStateOf("") }
+
+                OutlinedTextField(
+                    value = newName,
+                    onValueChange = { newName = it },
+                    label = { Text("$type Name") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                val makeOptions = when (type)
+                {
+                    "Kayak" -> kayakOptions
+                    "Canoe" -> canoeOptions
+                    "PaddleBoard" -> paddleBoardOptions
+                    else -> emptyList()
+                }
+                val lengthOptions = when (type)
+                {
+                    "Kayak" -> kayakLengths
+                    "Canoe" -> canoeLengths
+                    "PaddleBoard" -> paddleBoardLengths
+                    else -> emptyList()
+                }
+                val colorOptions = when (type)
+                {
+                    "Kayak" -> kayakColors
+                    "Canoe" -> canoeColors
+                    "PaddleBoard" -> paddleBoardColors
+                    else -> emptyList()
+                }
+
+                DropdownField("Make", newMake, makeOptions) { newMake = it }
+                EditableField("Model", newModel) { newModel = it }
+                DropdownField("Length", newLength, lengthOptions) { newLength = it }
+                DropdownField("Color", newColor, colorOptions) { newColor = it }
+
+                Spacer(Modifier.height(12.dp))
+
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Button(
+                        onClick =
+                            {
+                            if (newName.isNotBlank())
+                            {
+                                val newEntry = CraftEntry(
+                                    type = type,
+                                    name = newName,
+                                    make = newMake,
+                                    model = newModel,
+                                    length = newLength,
+                                    color = newColor
+                                )
+                                when (type)
+                                {
+                                    "Kayak" -> kayaks.add(newEntry)
+                                    "Canoe" -> canoes.add(newEntry)
+                                    "PaddleBoard" -> paddleBoards.add(newEntry)
+                                }
+                                activeCraftType = null  // hide form after adding
+                            }
+                        },
+                        modifier = Modifier.weight(1f)
+                    )
+                    {
+                        Text("Add $type")
+                    }
+
+                    OutlinedButton(
+                        onClick = { activeCraftType = null },
+                        modifier = Modifier.weight(1f)
+                    )
+                    {
+                        Text("Cancel")
+                    }
+                }
+            }
+        }
+
+        if (kayaks.isNotEmpty() || canoes.isNotEmpty() || paddleBoards.isNotEmpty())
         {
-            DropdownField("PaddleBoard Make", paddleBoardMake, paddleBoardOptions) { paddleBoardMake = it }
-            DropdownField("PaddleBoard Length", paddleBoardLength, paddleBoardLengths) { paddleBoardLength = it }
-            DropdownField("PaddleBoard Color", paddleBoardColor, paddleBoardColors) { paddleBoardColor = it }
-            EditableField("PaddleBoard Model", paddleBoardModel) { paddleBoardModel = it }
+            Spacer(Modifier.height(32.dp))
+            Text("Your Watercraft", style = MaterialTheme.typography.titleMedium)
+            Spacer(Modifier.height(8.dp))
+
+            kayaks.forEachIndexed { index, entry ->
+                CraftCard(entry, onDelete = { kayaks.removeAt(index) })
+            }
+
+            canoes.forEachIndexed { index, entry ->
+                CraftCard(entry, onDelete = { canoes.removeAt(index) })
+            }
+
+            paddleBoards.forEachIndexed { index, entry ->
+                CraftCard(entry, onDelete = { paddleBoards.removeAt(index) })
+            }
         }
 
         Spacer(Modifier.height(32.dp))
 
         // Save Button
         Button(onClick = {
-            val updatedProfile = KayakerProfile(
-                userId = profile?.userId ?: "",
+            val allCrafts = kayaks + canoes + paddleBoards
+            val updatedProfile = profile?.copy(
                 name = name,
                 gender = gender,
                 age = age.toIntOrNull() ?: 0,
@@ -218,18 +354,25 @@ fun ProfileScreen(viewModel: ProfileViewModel = viewModel())
                 state = state,
                 email = email,
                 phone = phone,
-                kayakMake = kayakMake,
-                kayakModel = kayakModel,
-                kayakLength = kayakLength,
-                kayakColor = kayakColor,
-                paddleBoardMake = paddleBoardMake,
-                paddleBoardModel = paddleBoardModel,
-                paddleBoardLength = paddleBoardLength,
-                paddleBoardColor = paddleBoardColor,
                 vehicleMake = vehicleMake,
                 vehicleModel = vehicleModel,
                 vehicleColor = vehicleColor,
-                plateNumber = plateNumber
+                plateNumber = plateNumber,
+                craftEntries = allCrafts.toList()
+            ) ?: KayakerProfile(
+                name = name,
+                gender = gender,
+                age = age.toIntOrNull() ?: 0,
+                address = address,
+                city = city,
+                state = state,
+                email = email,
+                phone = phone,
+                vehicleMake = vehicleMake,
+                vehicleModel = vehicleModel,
+                vehicleColor = vehicleColor,
+                plateNumber = plateNumber,
+                craftEntries = allCrafts.toList()
             )
             viewModel.saveProfile(updatedProfile)
         })
@@ -241,7 +384,29 @@ fun ProfileScreen(viewModel: ProfileViewModel = viewModel())
     }
 }
 
-// Reusable Section Card
+// Reusable craft card
+@Composable
+fun CraftCard(entry: CraftEntry, onDelete: () -> Unit)
+{
+    Card(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp))
+    {
+        Row(
+            modifier = Modifier.padding(12.dp).fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column {
+                Text("${entry.type}: ${entry.name}", style = MaterialTheme.typography.titleSmall)
+                Text("${entry.make} ${entry.model} • ${entry.length} • ${entry.color}")
+            }
+            IconButton(onClick = onDelete)
+            {
+                Icon(Icons.Default.Delete, contentDescription = "Remove")
+            }
+        }
+    }
+}
+
 @Composable
 fun ProfileSection(title: String, content: @Composable ColumnScope.() -> Unit)
 {
@@ -250,9 +415,9 @@ fun ProfileSection(title: String, content: @Composable ColumnScope.() -> Unit)
             .fillMaxWidth()
             .padding(vertical = 8.dp),
         elevation = CardDefaults.cardElevation(4.dp)
-    ) {
-        Column(modifier = Modifier.padding(16.dp))
-        {
+    )
+    {
+        Column(modifier = Modifier.padding(16.dp)) {
             Text(title, style = MaterialTheme.typography.titleMedium)
             Spacer(Modifier.height(16.dp))
             content()
@@ -260,7 +425,6 @@ fun ProfileSection(title: String, content: @Composable ColumnScope.() -> Unit)
     }
 }
 
-// Reusable Editable Field
 @Composable
 fun EditableField(
     label: String,
@@ -268,7 +432,8 @@ fun EditableField(
     keyboardType: KeyboardType = KeyboardType.Text,
     multiline: Boolean = false,
     onChange: (String) -> Unit
-) {
+)
+{
     OutlinedTextField(
         value = value,
         onValueChange = onChange,
@@ -279,7 +444,6 @@ fun EditableField(
     )
 }
 
-// Reusable Dropdown Field
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DropdownField(
@@ -306,11 +470,13 @@ fun DropdownField(
         ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false })
         {
             options.forEach { option ->
-                DropdownMenuItem(text = { Text(option) }, onClick =
-                    {
-                    onSelect(option)
-                    expanded = false
-                })
+                DropdownMenuItem(
+                    text = { Text(option) },
+                    onClick = {
+                        onSelect(option)
+                        expanded = false
+                    }
+                )
             }
         }
     }

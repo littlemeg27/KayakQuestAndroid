@@ -3,7 +3,7 @@ package com.example.kayakquest.data
 import com.google.firebase.firestore.PropertyName
 
 data class KayakerProfile(
-    @PropertyName("userId") val userId: String = "",  // Firebase Auth UID
+    @PropertyName("userId") val userId: String = "",
     @PropertyName("name") val name: String = "",
     @PropertyName("gender") val gender: String = "",
     @PropertyName("age") val age: Int = 0,
@@ -13,41 +13,15 @@ data class KayakerProfile(
     @PropertyName("email") val email: String = "",
     @PropertyName("phone") val phone: String = "",
     @PropertyName("safetyEquipmentNotes") val safetyEquipmentNotes: String = "",
-    @PropertyName("kayakMake") val kayakMake: String = "",
-    @PropertyName("kayakModel") val kayakModel: String = "",
-    @PropertyName("kayakLength") val kayakLength: String = "",
-    @PropertyName("kayakColor") val kayakColor: String = "",
-    @PropertyName("paddleBoardMake") val paddleBoardMake: String = "",
-    @PropertyName("paddleBoardModel") val paddleBoardModel: String = "",
-    @PropertyName("paddleBoardLength") val paddleBoardLength: String = "",
-    @PropertyName("paddleBoardColor") val paddleBoardColor: String = "",
     @PropertyName("vehicleMake") val vehicleMake: String = "",
     @PropertyName("vehicleModel") val vehicleModel: String = "",
     @PropertyName("vehicleColor") val vehicleColor: String = "",
-    @PropertyName("plateNumber") val plateNumber: String = ""
-) {
+    @PropertyName("plateNumber") val plateNumber: String = "",
 
-    constructor() :
-            this(
-                "",
-                "",
-                "",
-                0,
-                "",
-                "",
-                "",
-                "",
-                "",
-                "",
-                "",
-                "",
-                "",
-                "",
-                "",
-                "",
-                "",
-                "",
-                "",
-                "",
-                "")
+    @PropertyName("craftEntries")
+    val craftEntries: List<CraftEntry> = emptyList()
+) {
+    val kayaks get() = craftEntries.filter { it.type == "Kayak" }
+    val canoes get() = craftEntries.filter { it.type == "Canoe" }
+    val paddleBoards get() = craftEntries.filter { it.type == "PaddleBoard" }
 }

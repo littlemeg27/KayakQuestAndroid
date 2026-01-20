@@ -80,6 +80,7 @@ dependencies {
     implementation("androidx.activity:activity-compose:1.9.2")
     implementation(libs.androidx.compose.foundation.layout)
     implementation(libs.androidx.webkit)
+    implementation(libs.androidx.compose.foundation)
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
 
