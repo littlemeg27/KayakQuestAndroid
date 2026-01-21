@@ -17,7 +17,7 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.KayakQuest">
+        android:theme="@style/Theme.PaddleQuest">
 
         <activity
             android:name=".operations.MainActivity"
@@ -36,7 +36,7 @@
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data
                     android:scheme="https"
-                    android:host="kayakquest.page.link"
+                    android:host="paddlequest.page.link"
                     android:pathPrefix="/__/auth/action" />
             </intent-filter>
 

@@ -9,11 +9,11 @@ plugins {
 }
 
 android {
-    namespace = "com.example.kayakquest"
+    namespace = "com.example.paddlequest"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.example.kayakquest"
+        applicationId = "com.example.paddlequest"
         minSdk = 24
         targetSdk = 36
         versionCode = 1

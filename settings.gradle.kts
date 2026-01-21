@@ -19,6 +19,6 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "KayakQuest"
+rootProject.name = "PaddleQuest"
 include(":app")
  
