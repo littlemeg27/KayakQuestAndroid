@@ -49,7 +49,7 @@ fun MapScreen(viewModel: SelectedPinViewModel = viewModel()) {
 fun loadMarkersFromJson(context: android.content.Context): List<MarkerData>
 {
     val gson = Gson()
-    val inputStream = context.assets.open("prepopulated_markers.json")
+    val inputStream = context.assets.open("nc_prepopulated_markers.json")
     val reader = InputStreamReader(inputStream)
     val markerType = object : TypeToken<List<MarkerData>>() {}.type
     val markers: List<MarkerData> = gson.fromJson(reader, markerType)
