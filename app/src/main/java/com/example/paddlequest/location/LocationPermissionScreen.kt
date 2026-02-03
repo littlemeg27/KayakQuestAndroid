@@ -44,20 +44,16 @@ fun LocationPermissionScreen() {
         Manifest.permission.ACCESS_COARSE_LOCATION,
     )
 
-    // When precision is important request both permissions but make sure to handle the case where
-    // the user only grants ACCESS_COARSE_LOCATION
     val fineLocationPermissionState = rememberMultiplePermissionsState(
         listOf(
             Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION,
         ),
     )
 
-    // In really rare use cases, accessing background location might be needed.
     val bgLocationPermissionState = rememberPermissionState(
         Manifest.permission.ACCESS_BACKGROUND_LOCATION,
     )
 
-    // Keeps track of the rationale dialog state, needed when the user requires further rationale
     var rationaleState by remember {
         mutableStateOf<RationaleState?>(null)
     }
@@ -114,9 +110,6 @@ fun LocationPermissionScreen() {
                 }
             }
 
-            // Background location permission needed from Android Q,
-            // before Android Q, granting Fine or Coarse location access automatically grants Background
-            // location access
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 PermissionRequestButton(
                     isGranted = bgLocationPermissionState.status.isGranted,

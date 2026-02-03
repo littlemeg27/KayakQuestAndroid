@@ -13,32 +13,45 @@ import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.rememberCameraPositionState
 import com.example.paddlequest.operations.SelectedPinViewModel
-import androidx.compose.ui.platform.LocalContext  // Add this import for LocalContext
-import androidx.compose.foundation.layout.fillMaxSize  // Add for fillMaxSize
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.foundation.layout.fillMaxSize
 import java.io.InputStreamReader
 
 @Composable
-fun MapScreen(viewModel: SelectedPinViewModel = viewModel()) {
-    val context = LocalContext.current  // Get context here
+fun MapScreen(viewModel: SelectedPinViewModel = viewModel())
+{
+    val context = LocalContext.current
     val cameraPositionState = rememberCameraPositionState {
         position = CameraPosition.fromLatLngZoom(LatLng(35.227085, -80.843124), 10f)
     }
+
     GoogleMap(
         modifier = Modifier.fillMaxSize(),
         cameraPositionState = cameraPositionState,
-        onMapClick = { latLng ->
+        onMapClick =
+            { latLng ->
             viewModel.setSelectedPin(latLng)
         }
-    ) {
-
+    )
+    {
         val markers = loadMarkersFromJson(context)
+
         markers.forEach { marker ->
             Marker(
                 state = MarkerState(position = LatLng(marker.latitude, marker.longitude)),
-                title = marker.title,
-                snippet = marker.snippet,
-                onClick = {
-                    viewModel.setSelectedPin(it.position)
+                title = marker.accessName.ifBlank { "Unnamed Access" },  // Main bold title
+                snippet = buildString
+                {
+                    append(marker.riverName.ifBlank { "No river specified" })
+
+                    if (marker.otherName.isNotBlank()) append(" • ${marker.otherName}")
+                    append("\n${marker.type}")
+                    append(" • ${marker.county}, ${marker.state}")
+
+                    if (marker.department.isNotBlank()) append("\n${marker.department}")
+                },
+                onClick = { clickedMarker ->
+                    viewModel.setSelectedPin(clickedMarker.position)
                     false
                 }
             )
@@ -48,11 +61,15 @@ fun MapScreen(viewModel: SelectedPinViewModel = viewModel()) {
 
 fun loadMarkersFromJson(context: android.content.Context): List<MarkerData>
 {
-    val gson = Gson()
-    val inputStream = context.assets.open("nc_prepopulated_markers.json")
-    val reader = InputStreamReader(inputStream)
-    val markerType = object : TypeToken<List<MarkerData>>() {}.type
-    val markers: List<MarkerData> = gson.fromJson(reader, markerType)
-    reader.close()
-    return markers
+    return try
+    {
+        val gson = Gson()
+        val inputStream = context.assets.open("prepopulated_markers.json")
+        val reader = InputStreamReader(inputStream)
+        val type = object : TypeToken<List<MarkerData>>() {}.type
+        gson.fromJson<List<MarkerData>>(reader, type).also { reader.close() }
+    } catch (e: Exception) {
+        android.util.Log.e("MapScreen", "Failed to load markers", e)
+        emptyList()
+    }
 }

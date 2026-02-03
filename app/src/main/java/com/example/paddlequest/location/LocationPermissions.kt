@@ -106,7 +106,8 @@ fun PermissionRequestButton(isGranted: Boolean, title: String, onClick: () -> Un
  * Simple AlertDialog that displays the given rationale state
  */
 @Composable
-fun PermissionRationaleDialog(rationaleState: RationaleState) {
+fun PermissionRationaleDialog(rationaleState: RationaleState)
+{
     AlertDialog(onDismissRequest = { rationaleState.onRationaleReply(false) }, title = {
         Text(text = rationaleState.title)
     }, text = {

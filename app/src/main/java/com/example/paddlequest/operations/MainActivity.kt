@@ -28,7 +28,8 @@ class MainActivity : ComponentActivity()
         try
         {
             Log.d("MainActivity", "FirebaseApp initialized: ${FirebaseApp.getInstance().name}")
-        } catch (e: Exception)
+        }
+        catch (e: Exception)
         {
             Log.e("MainActivity", "Firebase not initialized", e)
         }
