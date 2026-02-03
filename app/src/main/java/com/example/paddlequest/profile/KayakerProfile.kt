@@ -1,5 +1,6 @@
-package com.example.paddlequest.data
+package com.example.paddlequest.profile
 
+import com.example.paddlequest.profile.CraftEntry
 import com.google.firebase.firestore.PropertyName
 
 data class KayakerProfile(

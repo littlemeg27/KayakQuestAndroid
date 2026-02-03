@@ -3,7 +3,7 @@ package com.example.paddlequest.profile
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.paddlequest.data.KayakerProfile
+import com.example.paddlequest.profile.KayakerProfile
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.flow.MutableStateFlow

@@ -15,7 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.paddlequest.data.KayakerProfile
+import com.example.paddlequest.profile.KayakerProfile
 import com.example.paddlequest.operations.FloatPlan
 import com.example.paddlequest.profile.ProfileViewModel
 import com.google.firebase.auth.FirebaseAuth

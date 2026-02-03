@@ -19,7 +19,7 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.text.SimpleDateFormat
 import java.util.*
-import com.example.paddlequest.operations.SelectedPinViewModel
+import com.example.paddlequest.ramps.SelectedPinViewModel
 import com.example.paddlequest.weather.USGSWaterResponse
 import com.example.paddlequest.weather.WeatherApiService
 import com.example.paddlequest.weather.WeatherbitHourlyResponse

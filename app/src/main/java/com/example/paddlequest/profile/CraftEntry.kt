@@ -1,4 +1,4 @@
-package com.example.paddlequest.data
+package com.example.paddlequest.profile
 
 data class CraftEntry(
     val type: String = "Kayak",

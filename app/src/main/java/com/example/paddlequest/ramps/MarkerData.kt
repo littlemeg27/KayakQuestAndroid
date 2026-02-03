@@ -1,4 +1,4 @@
-package com.example.paddlequest.operations
+package com.example.paddlequest.ramps
 
 import com.google.android.gms.maps.model.LatLng
 

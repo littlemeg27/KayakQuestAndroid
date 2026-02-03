@@ -13,8 +13,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.paddlequest.data.CraftEntry
-import com.example.paddlequest.data.KayakerProfile
+import com.example.paddlequest.profile.CraftEntry
+import com.example.paddlequest.profile.KayakerProfile
 import com.example.paddlequest.profile.ProfileViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
