@@ -1,7 +1,11 @@
 package com.example.paddlequest.screens
 
-import androidx.compose.runtime.Composable
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.paddlequest.ramps.MarkerData
 import com.google.android.gms.maps.model.CameraPosition
@@ -13,28 +17,26 @@ import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.rememberCameraPositionState
 import com.example.paddlequest.ramps.SelectedPinViewModel
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.rememberModalBottomSheetState
-import androidx.compose.runtime.LaunchedEffect
-import com.example.paddlequest.ramps.GroupedRamps
 import java.io.InputStreamReader
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MapScreen(viewModel: SelectedPinViewModel = viewModel())
 {
     val context = LocalContext.current
+    val selectedPin by viewModel.selectedPin.observeAsState()
+
     val cameraPositionState = rememberCameraPositionState {
         position = CameraPosition.fromLatLngZoom(LatLng(35.227085, -80.843124), 10f)
     }
 
+    // Bottom sheet state
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
     var showTripSuggestions by remember { mutableStateOf(false) }
 
-    LaunchedEffect(viewModel.selectedPin)
+    LaunchedEffect(selectedPin)
     {
-        if (viewModel.selectedPin != null)
+        if (selectedPin != null)
         {
             showTripSuggestions = true
         }
@@ -44,7 +46,8 @@ fun MapScreen(viewModel: SelectedPinViewModel = viewModel())
         modifier = Modifier.fillMaxSize(),
         cameraPositionState = cameraPositionState,
         onMapClick =
-            { latLng ->
+            {
+            latLng ->
             viewModel.setSelectedPin(latLng)
         }
     )
@@ -54,7 +57,7 @@ fun MapScreen(viewModel: SelectedPinViewModel = viewModel())
         markers.forEach { marker ->
             Marker(
                 state = MarkerState(position = LatLng(marker.latitude, marker.longitude)),
-                title = marker.accessName.ifBlank { "Unnamed Access" },  // Main bold title
+                title = marker.accessName.ifBlank { "Unnamed Access" },
                 snippet = buildString
                 {
                     append(marker.riverName.ifBlank { "No river specified" })
@@ -72,6 +75,26 @@ fun MapScreen(viewModel: SelectedPinViewModel = viewModel())
             )
         }
     }
+
+    if (showTripSuggestions)
+    {
+        ModalBottomSheet(
+            onDismissRequest = { showTripSuggestions = false },
+            sheetState = sheetState
+        )
+        {
+            SuggestedTripsScreen(
+                selectedLocation = selectedPin,
+                onDismiss = { showTripSuggestions = false },
+                onSelectTrip = { putIn, takeOut ->
+                    // TODO: Navigate to FloatPlanScreen or pre-fill it
+                    // For example:
+                    // navController.navigate("float_plan?putIn=${putIn.accessName}&takeOut=${takeOut.accessName}")
+                    showTripSuggestions = false
+                }
+            )
+        }
+    }
 }
 
 fun loadMarkersFromJson(context: android.content.Context): List<MarkerData>
@@ -83,27 +106,10 @@ fun loadMarkersFromJson(context: android.content.Context): List<MarkerData>
         val reader = InputStreamReader(inputStream)
         val type = object : TypeToken<List<MarkerData>>() {}.type
         gson.fromJson<List<MarkerData>>(reader, type).also { reader.close() }
-    } catch (e: Exception) {
+    }
+    catch (e: Exception)
+    {
         android.util.Log.e("MapScreen", "Failed to load markers", e)
         emptyList()
     }
-
-    if (showTripSuggestions)
-    {
-        ModalBottomSheet(
-            onDismissRequest = { showTripSuggestions = false },
-            sheetState = sheetState
-        )
-        {
-            SuggestedTripsScreen(
-                selectedLocation = viewModel.selectedPin,
-                onDismiss = { showTripSuggestions = false },
-                onSelectTrip = { putIn, takeOut ->
-                    // Navigate to FloatPlanScreen or pre-fill it
-                    showTripSuggestions = false
-                }
-            )
-        }
-    }
-
 }

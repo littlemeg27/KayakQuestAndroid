@@ -28,7 +28,7 @@ import com.example.paddlequest.weather.WeatherbitResponse
 @Composable
 fun WeatherScreen(viewModel: SelectedPinViewModel = viewModel())
 {
-    val selectedPin by viewModel.getSelectedPin().observeAsState(null)
+    val selectedPin by viewModel.selectedPin.observeAsState(null)
     val latLng = selectedPin ?: LatLng(35.227085, -80.843124)
 
     var currentWeather by remember { mutableStateOf<WeatherbitResponse?>(null) }

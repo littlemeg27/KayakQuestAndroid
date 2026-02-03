@@ -9,39 +9,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.example.paddlequest.ramps.MarkerData
-import com.google.android.gms.maps.model.LatLng   // ← ONLY this LatLng (Google Maps)
-import kotlin.math.*
-
-
-// Helper data class
-data class GroupedRamps(
-    val waterbody: String,
-    val ramps: List<MarkerData>
-)
-
-// Helper functions
-fun groupRampsByWaterbody(markers: List<MarkerData>): List<GroupedRamps>
-{
-    return markers.groupBy { it.riverName.ifBlank { it.otherName } }
-        .map { (waterbody, ramps) ->
-            GroupedRamps(waterbody, ramps)
-        }
-        .filter { it.ramps.isNotEmpty() }
-}
-
-fun haversineDistance(point1: LatLng, point2: LatLng): Double
-{
-    val r = 6371.0 // Earth radius in km
-    val dLat = Math.toRadians(point2.latitude - point1.latitude)
-    val dLon = Math.toRadians(point2.longitude - point1.longitude)
-    val a = sin(dLat / 2) * sin(dLat / 2) +
-            cos(Math.toRadians(point1.latitude)) * cos(Math.toRadians(point2.latitude)) *
-            sin(dLon / 2) * sin(dLon / 2)
-    val c = 2 * atan2(sqrt(a), sqrt(1 - a))
-    return r * c
-}
-
-fun MarkerData.getLatLng(): LatLng = LatLng(latitude, longitude)
+import com.example.paddlequest.ramps.groupRampsByWaterbody
+import com.example.paddlequest.ramps.haversineDistance
+import com.google.android.gms.maps.model.LatLng
 
 @Composable
 fun SuggestedTripsScreen(
@@ -63,15 +33,22 @@ fun SuggestedTripsScreen(
             LazyColumn(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(1f)  // optional: let it take available space
+                    .weight(1f)
             ) {
-                items(grouped) { group ->
-                    Text(group.waterbody, style = MaterialTheme.typography.titleMedium)
-                    Spacer(Modifier.height(8.dp))
+                grouped.forEach { group ->
+                    // Filter ramps nearby to decide if we show the group header
+                    val nearbyRamps = group.ramps.filter {
+                        haversineDistance(selectedLocation, it.getLatLng()) < 20
+                    }
 
-                    items(group.ramps) { ramp ->
-                        val distance = haversineDistance(selectedLocation, ramp.getLatLng())
-                        if (distance < 20) {
+                    if (nearbyRamps.isNotEmpty()) {
+                        item {
+                            Text(group.waterbody, style = MaterialTheme.typography.titleMedium)
+                            Spacer(Modifier.height(8.dp))
+                        }
+
+                        items(nearbyRamps) { ramp ->
+                            val distance = haversineDistance(selectedLocation, ramp.getLatLng())
                             Card(
                                 onClick = {
                                     val takeOut = group.ramps.lastOrNull() ?: ramp

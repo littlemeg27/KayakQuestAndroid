@@ -8,11 +8,15 @@ import com.google.android.gms.maps.model.LatLng
 class SelectedPinViewModel : ViewModel()
 {
     private val _selectedPin = MutableLiveData<LatLng?>()
+    val selectedPin: LiveData<LatLng?> = _selectedPin
 
-    fun getSelectedPin(): LiveData<LatLng?> = _selectedPin
-
-    fun setSelectedPin(pin: LatLng?)
+    fun setSelectedPin(latLng: LatLng?)
     {
-        _selectedPin.value = pin
+        _selectedPin.value = latLng
+    }
+
+    fun clearSelectedPin()
+    {
+        _selectedPin.value = null
     }
 }
