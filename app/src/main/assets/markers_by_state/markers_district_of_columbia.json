@@ -1,0 +1,68 @@
+[
+  {
+    "department": "Department of Energy and Environment",
+    "state": "District of Columbia",
+    "county": "District of Columbia",
+    "latitude": 38.8798686864,
+    "longitude": -76.970700094,
+    "accessName": "Anacostia Park Boat Ramp",
+    "riverName": "Anacostia River",
+    "type": "Public",
+    "otherName": "Lower Anacostia River"
+  },
+  {
+    "department": "Department of Energy and Environment",
+    "state": "District of Columbia",
+    "county": "District of Columbia",
+    "latitude": 38.8749586622,
+    "longitude": -77.0492430747,
+    "accessName": "Columbia Island Marina Boat Ramp",
+    "riverName": "Potomac River",
+    "type": "Public",
+    "otherName": "Pimmit Run-Potomac River"
+  },
+  {
+    "department": "Department of Energy and Environment",
+    "state": "District of Columbia",
+    "county": "Arlington County",
+    "latitude": 38.8638635185,
+    "longitude": -77.0411301487,
+    "accessName": "Gravelly Point Boat Ramp",
+    "riverName": "Potomac River",
+    "type": "Public",
+    "otherName": "Pimmit Run-Potomac River"
+  },
+  {
+    "department": "Department of Energy and Environment",
+    "state": "District of Columbia",
+    "county": "District of Columbia",
+    "latitude": 38.9188366852,
+    "longitude": -77.1024074073,
+    "accessName": "Fletchers Cove",
+    "riverName": "Potomac River",
+    "type": "Semi-Private",
+    "otherName": "Pimmit Run-Potomac River"
+  },
+  {
+    "department": "Department of Energy and Environment",
+    "state": "District of Columbia",
+    "county": "District of Columbia",
+    "latitude": 38.8342703261,
+    "longitude": -77.0234428835,
+    "accessName": "Capital Cove Marina (Bolling Air Force Base)",
+    "riverName": "Potomac River",
+    "type": "Semi-Private",
+    "otherName": "Fourmile Run-Potomac River"
+  },
+  {
+    "department": "Department of Energy and Environment",
+    "state": "District of Columbia",
+    "county": "District of Columbia",
+    "latitude": 38.9043185555,
+    "longitude": -77.0599701716,
+    "accessName": "Georgetown Visitor Center",
+    "riverName": "C&O Canal",
+    "type": "Public",
+    "otherName": "Pimmit Run-Potomac River"
+  }
+]

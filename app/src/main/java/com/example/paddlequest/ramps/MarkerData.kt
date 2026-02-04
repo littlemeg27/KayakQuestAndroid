@@ -1,6 +1,10 @@
 package com.example.paddlequest.ramps
 
 import com.google.android.gms.maps.model.LatLng
+import com.google.common.reflect.TypeToken
+import com.google.gson.Gson
+import java.io.File
+import java.io.InputStreamReader
 
 data class MarkerData(
     val latitude: Double,

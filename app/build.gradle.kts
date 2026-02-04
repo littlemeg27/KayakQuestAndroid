@@ -60,6 +60,15 @@ android {
     packaging {
         resources.excludes.addAll(listOf("/META-INF/AL2.0", "/META-INF/LGPL2.1"))
     }
+
+    sourceSets {
+        // Map 'unitTest' to 'test' to fix IDE run issues with main() functions in src/test
+        val testSourceSet = sourceSets.getByName("test")
+        create("unitTest") {
+            java.srcDirs(testSourceSet.java.srcDirs)
+            resources.srcDirs(testSourceSet.resources.srcDirs)
+        }
+    }
 }
 
 dependencies {

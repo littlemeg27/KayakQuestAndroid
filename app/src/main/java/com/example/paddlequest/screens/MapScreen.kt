@@ -1,9 +1,11 @@
 package com.example.paddlequest.screens
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -17,62 +19,60 @@ import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.rememberCameraPositionState
 import com.example.paddlequest.ramps.SelectedPinViewModel
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.io.InputStreamReader
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MapScreen(viewModel: SelectedPinViewModel = viewModel())
 {
     val context = LocalContext.current
+    var markers by remember { mutableStateOf<List<MarkerData>>(emptyList()) }
+    var isLoading by remember { mutableStateOf(true) }
     val selectedPin by viewModel.selectedPin.observeAsState()
-
-    val cameraPositionState = rememberCameraPositionState {
-        position = CameraPosition.fromLatLngZoom(LatLng(35.227085, -80.843124), 10f)
-    }
 
     // Bottom sheet state
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
     var showTripSuggestions by remember { mutableStateOf(false) }
 
-    LaunchedEffect(selectedPin)
+    LaunchedEffect(Unit)
     {
-        if (selectedPin != null)
+        withContext(Dispatchers.IO)
         {
-            showTripSuggestions = true
+            markers = loadMarkersFromJson(context)
+            isLoading = false
         }
     }
 
-    GoogleMap(
-        modifier = Modifier.fillMaxSize(),
-        cameraPositionState = cameraPositionState,
-        onMapClick =
-            {
-            latLng ->
-            viewModel.setSelectedPin(latLng)
-        }
-    )
+    if (isLoading)
     {
-        val markers = loadMarkersFromJson(context)
-
-        markers.forEach { marker ->
-            Marker(
-                state = MarkerState(position = LatLng(marker.latitude, marker.longitude)),
-                title = marker.accessName.ifBlank { "Unnamed Access" },
-                snippet = buildString
-                {
-                    append(marker.riverName.ifBlank { "No river specified" })
-
-                    if (marker.otherName.isNotBlank()) append(" • ${marker.otherName}")
-                    append("\n${marker.type}")
-                    append(" • ${marker.county}, ${marker.state}")
-
-                    if (marker.department.isNotBlank()) append("\n${marker.department}")
-                },
-                onClick = { clickedMarker ->
-                    viewModel.setSelectedPin(clickedMarker.position)
-                    false
-                }
-            )
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center)
+        {
+            CircularProgressIndicator()
+        }
+    }
+    else
+    {
+        GoogleMap(
+            modifier = Modifier.fillMaxSize(),
+            cameraPositionState = rememberCameraPositionState
+            {
+                position = CameraPosition.fromLatLngZoom(LatLng(35.227085, -80.843124), 10f)
+            }
+        ) {
+            markers.forEach { marker ->
+                Marker(
+                    state = MarkerState(position = LatLng(marker.latitude, marker.longitude)),
+                    title = marker.accessName.ifBlank { "Unnamed" },
+                    snippet = buildString {
+                        append(marker.riverName.ifBlank { "No river" })
+                        if (marker.otherName.isNotBlank()) append(" • ${marker.otherName}")
+                        append("${marker.type} • ${marker.county}, ${marker.state}")
+                    }
+                )
+            }
         }
     }
 
