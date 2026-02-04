@@ -1,12 +1,14 @@
 package com.example.paddlequest.navigation
 
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AddCircle
 import androidx.compose.material.icons.filled.Cloud
 import androidx.compose.material.icons.filled.Create
 import androidx.compose.material.icons.filled.Login
 import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.outlined.AddCircle
 import androidx.compose.material.icons.outlined.Create
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.outlined.Place
@@ -21,6 +23,7 @@ sealed class Screen(val route: String, val label: String, val icon: ImageVector)
     object FloatPlan : Screen("floatplan", "Float Plan", Icons.Default.Create)
     object Weather : Screen("weather", "Weather", Icons.Default.Cloud)
     object Profile : Screen("profile", "Profile", Icons.Default.Person)
+    object SuggestedTripsScreen : Screen("suggestedTripsScreen", "SuggestedTripsScreen", Icons.Default.AddCircle)
     object Settings : Screen("settings", "Settings", Icons.Default.Settings)
 }
 
@@ -49,6 +52,11 @@ val BottomNavItems = listOf(
     NavItem(
         screen = Screen.Profile,
         unselectedIcon = Icons.Outlined.Person,
+        hasNews = false
+    ),
+    NavItem(
+        screen = Screen.SuggestedTripsScreen,
+        unselectedIcon = Icons.Outlined.AddCircle,
         hasNews = false
     ),
     NavItem(

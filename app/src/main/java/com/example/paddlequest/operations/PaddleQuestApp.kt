@@ -3,6 +3,7 @@ package com.example.paddlequest.operations
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.AccountCircle
+import androidx.compose.material.icons.outlined.AddCircle
 import androidx.compose.material.icons.outlined.Create
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.outlined.Place
@@ -15,31 +16,39 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.example.paddlequest.navigation.Screen
+import com.example.paddlequest.ramps.SelectedPinViewModel
 import com.example.paddlequest.screens.FloatPlanScreen
 import com.example.paddlequest.screens.MapScreen
 import com.example.paddlequest.screens.ProfileScreen
 import com.example.paddlequest.screens.SettingsScreen
 import com.example.paddlequest.screens.SignInScreen
+import com.example.paddlequest.screens.SuggestedTripsScreen
 import com.example.paddlequest.screens.WeatherScreen
 
 @Composable
 fun PaddleQuestApp()
 {
     val navController = rememberNavController()
+    val selectedPinViewModel: SelectedPinViewModel = viewModel()
 
     val bottomNavItems = listOf(
         Screen.Map,
         Screen.FloatPlan,
         Screen.Weather,
         Screen.Profile,
+        Screen.SuggestedTripsScreen,
         Screen.Settings
     )
 
@@ -62,6 +71,7 @@ fun PaddleQuestApp()
                                     is Screen.FloatPlan -> Icons.Outlined.Create
                                     is Screen.Weather -> Icons.Outlined.Warning
                                     is Screen.Profile -> Icons.Outlined.Person
+                                    is Screen.SuggestedTripsScreen -> Icons.Outlined.AddCircle
                                     is Screen.Settings -> Icons.Outlined.Settings
                                     else -> Icons.Outlined.AccountCircle
                                 },
@@ -93,10 +103,35 @@ fun PaddleQuestApp()
             modifier = Modifier.padding(innerPadding)
         ) {
             composable(Screen.SignIn.route) { SignInScreen(navController) }
-            composable(Screen.Map.route) { MapScreen() }
-            composable(Screen.FloatPlan.route) { FloatPlanScreen() }
+            composable(Screen.Map.route) { MapScreen(viewModel = selectedPinViewModel) }
+            composable(
+                route = Screen.FloatPlan.route + "?putIn={putIn}&takeOut={takeOut}",
+                arguments = listOf(
+                    navArgument("putIn") {
+                        type = NavType.StringType
+                        nullable = true
+                        defaultValue = null
+                    },
+                    navArgument("takeOut") {
+                        type = NavType.StringType
+                        nullable = true
+                        defaultValue = null
+                    }
+                )
+            ) { backStackEntry ->
+                val putIn = backStackEntry.arguments?.getString("putIn")
+                val takeOut = backStackEntry.arguments?.getString("takeOut")
+                FloatPlanScreen(putIn = putIn, takeOut = takeOut)
+            }
             composable(Screen.Weather.route) { WeatherScreen() }
             composable(Screen.Profile.route) { ProfileScreen() }
+            composable(Screen.SuggestedTripsScreen.route) {
+                val selectedLocation by selectedPinViewModel.selectedPin.observeAsState()
+                SuggestedTripsScreen(
+                    selectedLocation = selectedLocation,
+                    navController = navController
+                )
+            }
             composable(Screen.Settings.route) { SettingsScreen() }
         }
     }

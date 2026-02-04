@@ -20,14 +20,21 @@ import com.example.paddlequest.ramps.haversineDistance
 import com.example.paddlequest.ramps.loadMarkersForState
 import com.google.android.gms.maps.model.LatLng
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SuggestedTripsScreen(
     selectedLocation: LatLng?,
-    navController: NavController  // ← added param
+    navController: NavController,
+    stateName: String = "North Carolina"
 ) {
     val context = LocalContext.current
-    val markers = loadMarkersForState(context)
-    val grouped = groupRampsByWaterbody(markers)
+    var markers by remember { mutableStateOf(emptyList<MarkerData>()) }
+    
+    LaunchedEffect(stateName) {
+        markers = loadMarkersForState(context, stateName)
+    }
+
+    val grouped = remember(markers) { groupRampsByWaterbody(markers) }
 
     Scaffold(
         topBar = {
@@ -56,18 +63,18 @@ fun SuggestedTripsScreen(
             else
             {
                 LazyColumn {
-                    items(grouped) { group ->
-                        Text(group.waterbody, style = MaterialTheme.typography.titleMedium)
-                        Spacer(Modifier.height(8.dp))
+                    grouped.forEach { group ->
+                        item {
+                            Text(group.waterbody, style = MaterialTheme.typography.titleMedium)
+                            Spacer(Modifier.height(8.dp))
+                        }
 
-                        items(group.ramps)
-                        { ramp ->
+                        items(group.ramps) { ramp ->
                             val distance = haversineDistance(selectedLocation, ramp.getLatLng())
                             if (distance < 20)
                             {
                                 Card(
-                                    onClick =
-                                        {
+                                    onClick = {
                                         val takeOut = group.ramps.lastOrNull() ?: ramp
                                         navController.navigate(Screen.FloatPlan.route + "?putIn=${ramp.accessName}&takeOut=${takeOut.accessName}")
                                     },
@@ -91,4 +98,3 @@ fun SuggestedTripsScreen(
         }
     }
 }
-
