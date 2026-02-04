@@ -4,7 +4,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
@@ -20,10 +20,18 @@ fun SuggestedTripsScreen(
     onSelectTrip: (MarkerData, MarkerData) -> Unit
 ) {
     val context = LocalContext.current
-    val markers = loadMarkersFromJson(context)
-    val grouped = groupRampsByWaterbody(markers)
+    val currentState = "Georgia"
 
-    Column(modifier = Modifier.padding(16.dp)) {
+    var markers by remember { mutableStateOf(emptyList<MarkerData>()) }
+
+    LaunchedEffect(currentState) {
+        markers = loadMarkersForState(context, currentState)
+    }
+
+    val grouped = remember(markers) { groupRampsByWaterbody(markers) }
+
+    Column(modifier = Modifier.padding(16.dp)) 
+    {
         Text("Suggested Trips", style = MaterialTheme.typography.headlineSmall)
         Spacer(Modifier.height(16.dp))
 
@@ -36,7 +44,6 @@ fun SuggestedTripsScreen(
                     .weight(1f)
             ) {
                 grouped.forEach { group ->
-                    // Filter ramps nearby to decide if we show the group header
                     val nearbyRamps = group.ramps.filter {
                         haversineDistance(selectedLocation, it.getLatLng()) < 20
                     }
