@@ -18,6 +18,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.paddlequest.profile.KayakerProfile
 import com.example.paddlequest.operations.FloatPlan
 import com.example.paddlequest.profile.ProfileViewModel
+import com.example.paddlequest.ramps.MarkerData
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.FirebaseStorage
@@ -35,7 +36,11 @@ import java.util.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun FloatPlanScreen(viewModel: ProfileViewModel = viewModel()) {
+fun FloatPlanScreen(
+    viewModel: ProfileViewModel = viewModel(),
+    putIn: String? = null,
+    takeOut: String? = null
+) {
     val context = LocalContext.current
     val profiles by viewModel.profiles.collectAsState()
 
@@ -45,6 +50,16 @@ fun FloatPlanScreen(viewModel: ProfileViewModel = viewModel()) {
 
     var showDepartureDatePicker by remember { mutableStateOf(false) }
     var showReturnTimePicker by remember { mutableStateOf(false) }
+
+    // Markers for selected state (load dynamically)
+    var markers by remember { mutableStateOf(emptyList<MarkerData>()) }
+    var isLoadingMarkers by remember { mutableStateOf(true) }
+
+    // Pre-fill from navigation args (if coming from SuggestedTripsScreen)
+    LaunchedEffect(putIn, takeOut) {
+        putIn?.let { floatPlan.value = floatPlan.value.copy(putInLocation = it) }
+        takeOut?.let { floatPlan.value = floatPlan.value.copy(takeOutLocation = it) }
+    }
 
     // Pre-fill safety notes from current user profile if available
     LaunchedEffect(profiles) {
@@ -100,10 +115,11 @@ fun FloatPlanScreen(viewModel: ProfileViewModel = viewModel()) {
 
         // Departure / Put-in Location
         item {
+            // Your existing Float Plan fields (pre-filled from args if present)
             OutlinedTextField(
                 value = floatPlan.value.putInLocation,
                 onValueChange = { floatPlan.value = floatPlan.value.copy(putInLocation = it) },
-                label = { Text("Departure / Put-in Location") },
+                label = { Text("Put-In Location") },
                 modifier = Modifier.fillMaxWidth()
             )
         }
@@ -113,7 +129,7 @@ fun FloatPlanScreen(viewModel: ProfileViewModel = viewModel()) {
             OutlinedTextField(
                 value = floatPlan.value.takeOutLocation,
                 onValueChange = { floatPlan.value = floatPlan.value.copy(takeOutLocation = it) },
-                label = { Text("Destination / Take-out Location") },
+                label = { Text("Take-Out Location") },
                 modifier = Modifier.fillMaxWidth()
             )
         }
@@ -164,7 +180,8 @@ fun FloatPlanScreen(viewModel: ProfileViewModel = viewModel()) {
             }
         }
 
-        if (selectedKayakers.isNotEmpty()) {
+        if (selectedKayakers.isNotEmpty())
+        {
             item {
                 Spacer(Modifier.height(16.dp))
                 Text("Selected Participants:", style = MaterialTheme.typography.titleMedium)
@@ -194,10 +211,9 @@ fun FloatPlanScreen(viewModel: ProfileViewModel = viewModel()) {
         }
     }
 
-    // ───────────────────────────────────────────────
-    //   Date Picker Dialog
-    // ───────────────────────────────────────────────
-    if (showDepartureDatePicker) {
+    // Date Picker Dialog
+    if (showDepartureDatePicker)
+    {
         val datePickerState = rememberDatePickerState()
         AlertDialog(
             onDismissRequest = { showDepartureDatePicker = false },
@@ -218,10 +234,9 @@ fun FloatPlanScreen(viewModel: ProfileViewModel = viewModel()) {
         )
     }
 
-    // ───────────────────────────────────────────────
-    //   Time Picker Dialog (for return time)
-    // ───────────────────────────────────────────────
-    if (showReturnTimePicker) {
+    // Time Picker Dialog (for return time)
+    if (showReturnTimePicker)
+    {
         val timePickerState = rememberTimePickerState()
         AlertDialog(
             onDismissRequest = { showReturnTimePicker = false },
@@ -245,9 +260,12 @@ private suspend fun createAndUploadPdf(
     context: Context,
     floatPlan: FloatPlan,
     selectedKayakers: List<KayakerProfile>
-) {
-    withContext(Dispatchers.IO) {
-        try {
+)
+{
+    withContext(Dispatchers.IO)
+    {
+        try
+        {
             val pdfFile = File(context.filesDir, "float_plan_${System.currentTimeMillis()}.pdf")
             val pdfWriter = PdfWriter(pdfFile.absolutePath)
             val pdfDoc = PdfDocument(pdfWriter)
@@ -262,7 +280,8 @@ private suspend fun createAndUploadPdf(
             document.add(Paragraph("Estimated Time of Return: ${floatPlan.returnTime}"))
             document.add(Paragraph("Other Trip Details / Notes:\n${floatPlan.tripNotes}"))
 
-            if (selectedKayakers.isNotEmpty()) {
+            if (selectedKayakers.isNotEmpty())
+            {
                 document.add(Paragraph("\nParticipants:").setBold())
                 selectedKayakers.forEachIndexed { index, kayaker ->
                     document.add(Paragraph("Participant ${index + 1}: ${kayaker.name ?: "Unnamed"}"))
@@ -289,7 +308,9 @@ private suspend fun createAndUploadPdf(
                 .await()
 
             Log.d("FloatPlan", "PDF created & uploaded: $downloadUrl")
-        } catch (e: Exception) {
+        }
+        catch (e: Exception)
+        {
             Log.e("FloatPlan", "PDF creation/upload failed", e)
         }
     }

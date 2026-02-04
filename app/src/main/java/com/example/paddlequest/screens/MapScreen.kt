@@ -10,6 +10,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.paddlequest.ramps.MarkerData
 import com.example.paddlequest.ramps.SelectedPinViewModel
+import com.example.paddlequest.ramps.loadMarkersForState
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.common.reflect.TypeToken
@@ -118,7 +119,8 @@ fun MapScreen(viewModel: SelectedPinViewModel = viewModel())
                 }
             }
 
-            if (isLoading) {
+            if (isLoading)
+            {
                 CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
             }
         }
@@ -128,23 +130,3 @@ fun MapScreen(viewModel: SelectedPinViewModel = viewModel())
     }
 }
 
-suspend fun loadMarkersForState(context: android.content.Context, stateName: String): List<MarkerData>
-{
-    return withContext(Dispatchers.IO)
-    {
-        try
-        {
-            val normalized = stateName.lowercase().replace(" ", "_")
-            val fileName = "markers_by_state/markers_$normalized.json"
-            val inputStream = context.assets.open(fileName)
-            val reader = InputStreamReader(inputStream)
-            val type = object : TypeToken<List<MarkerData>>() {}.type
-            Gson().fromJson<List<MarkerData>>(reader, type).also { reader.close() }
-        }
-        catch (e: Exception)
-        {
-            android.util.Log.e("MapScreen", "Failed to load markers for $stateName", e)
-            emptyList()
-        }
-    }
-}

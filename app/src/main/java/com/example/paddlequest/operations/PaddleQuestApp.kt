@@ -16,12 +16,13 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.BlendMode.Companion.Screen
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.example.paddlequest.navigation.Screen
 import com.example.paddlequest.screens.FloatPlanScreen
 import com.example.paddlequest.screens.MapScreen
 import com.example.paddlequest.screens.ProfileScreen
@@ -38,8 +39,8 @@ fun PaddleQuestApp()
         Screen.Map,
         Screen.FloatPlan,
         Screen.Weather,
-        Screen.Settings,
-        Screen.Profile
+        Screen.Profile,
+        Screen.Settings
     )
 
     Scaffold(
@@ -60,8 +61,8 @@ fun PaddleQuestApp()
                                     is Screen.Map -> Icons.Outlined.Place
                                     is Screen.FloatPlan -> Icons.Outlined.Create
                                     is Screen.Weather -> Icons.Outlined.Warning
-                                    is Screen.Settings -> Icons.Outlined.Settings
                                     is Screen.Profile -> Icons.Outlined.Person
+                                    is Screen.Settings -> Icons.Outlined.Settings
                                     else -> Icons.Outlined.AccountCircle
                                 },
                                 contentDescription = screen.label
