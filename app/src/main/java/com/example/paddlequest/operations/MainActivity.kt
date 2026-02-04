@@ -15,14 +15,15 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.example.paddlequest.data.Screen
 import com.example.paddlequest.screens.*
 import com.google.firebase.FirebaseApp
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.outlined.*
+import com.example.paddlequest.navigation.Screen
 
-class MainActivity : ComponentActivity()
-{
-    override fun onCreate(savedInstanceState: Bundle?)
-    {
+class MainActivity : ComponentActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         try
@@ -43,11 +44,10 @@ class MainActivity : ComponentActivity()
 }
 
 @Composable
-fun PaddleQuestApp()
-{
+fun PaddleQuestApp() {
     val navController = rememberNavController()
 
-    val items = listOf(
+    val bottomNavItems = listOf(
         Screen.Map,
         Screen.FloatPlan,
         Screen.Weather,
@@ -61,11 +61,26 @@ fun PaddleQuestApp()
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
                 val currentDestination = navBackStackEntry?.destination
 
-                items.forEach { screen ->
+                bottomNavItems.forEach { screen ->
+                    val selected = currentDestination?.hierarchy?.any { it.route == screen.route } == true
+
                     NavigationBarItem(
-                        icon = { Icon(screen.icon, contentDescription = screen.label) },
+                        icon = {
+                            Icon(
+                                imageVector = if (selected) screen.icon else when (screen)
+                                {
+                                    is Screen.Map -> Icons.Outlined.Place
+                                    is Screen.FloatPlan -> Icons.Outlined.Create
+                                    is Screen.Weather -> Icons.Outlined.Warning
+                                    is Screen.Settings -> Icons.Outlined.Settings
+                                    is Screen.Profile -> Icons.Outlined.Person
+                                    else -> Icons.Outlined.AccountCircle
+                                },
+                                contentDescription = screen.label
+                            )
+                        },
                         label = { Text(screen.label) },
-                        selected = currentDestination?.hierarchy?.any { it.route == screen.route } == true,
+                        selected = selected,
                         onClick = {
                             navController.navigate(screen.route) {
                                 popUpTo(navController.graph.findStartDestination().id) {
