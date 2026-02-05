@@ -8,31 +8,33 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
 import com.example.paddlequest.ramps.MarkerData
 import com.example.paddlequest.ramps.SelectedPinViewModel
 import com.example.paddlequest.ramps.loadMarkersForState
+
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
-import com.google.common.reflect.TypeToken
-import com.google.gson.Gson
 import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.rememberCameraPositionState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import java.io.InputStreamReader
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MapScreen(viewModel: SelectedPinViewModel = viewModel())
+fun MapScreen(
+    navController: NavController,
+    viewModel: SelectedPinViewModel = viewModel()
+)
 {
     val context = LocalContext.current
 
-    // State selector
+    // State selector (dropdown)
     var selectedState by remember { mutableStateOf("North Carolina") }
+    var expanded by remember { mutableStateOf(false) }
 
-    // Available states (add all you have files for)
     val availableStates = listOf(
         "Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado", "Connecticut", "Delaware",
         "Florida", "Georgia", "Hawaii", "Idaho", "Illinois", "Indiana", "Iowa", "Kansas", "Kentucky",
@@ -46,8 +48,8 @@ fun MapScreen(viewModel: SelectedPinViewModel = viewModel())
     var markers by remember { mutableStateOf(emptyList<MarkerData>()) }
     var isLoading by remember { mutableStateOf(true) }
 
-    LaunchedEffect(selectedState)
-    {
+    // Reload markers when state changes
+    LaunchedEffect(selectedState) {
         isLoading = true
         markers = loadMarkersForState(context, selectedState)
         isLoading = false
@@ -57,41 +59,41 @@ fun MapScreen(viewModel: SelectedPinViewModel = viewModel())
         position = CameraPosition.fromLatLngZoom(LatLng(35.227085, -80.843124), 10f)
     }
 
-    Column(modifier = Modifier.fillMaxSize())
-    {
+    Column(modifier = Modifier.fillMaxSize()) {
+        // State dropdown
         ExposedDropdownMenuBox(
-            expanded = false,
-            onExpandedChange = { /* toggle if you want */ }
+            expanded = expanded,
+            onExpandedChange = { expanded = !expanded }
         ) {
             OutlinedTextField(
                 readOnly = true,
                 value = selectedState,
                 onValueChange = { },
                 label = { Text("Select State") },
-                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = false) },
+                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(16.dp)
+                    .menuAnchor()
             )
 
             ExposedDropdownMenu(
-                expanded = false,
-                onDismissRequest = { }
-            )
-            {
+                expanded = expanded,
+                onDismissRequest = { expanded = false }
+            ) {
                 availableStates.forEach { state ->
                     DropdownMenuItem(
                         text = { Text(state) },
                         onClick = {
                             selectedState = state
+                            expanded = false
                         }
                     )
                 }
             }
         }
 
-        Box(modifier = Modifier.weight(1f))
-        {
+        Box(modifier = Modifier.weight(1f)) {
             GoogleMap(
                 modifier = Modifier.fillMaxSize(),
                 cameraPositionState = cameraPositionState,
@@ -105,7 +107,6 @@ fun MapScreen(viewModel: SelectedPinViewModel = viewModel())
                         title = marker.accessName.ifBlank { "Unnamed Access" },
                         snippet = buildString {
                             append(marker.riverName.ifBlank { "No river specified" })
-
                             if (marker.otherName.isNotBlank()) append(" • ${marker.otherName}")
                             append("\n${marker.type}")
                             append(" • ${marker.county}, ${marker.state}")
@@ -119,14 +120,25 @@ fun MapScreen(viewModel: SelectedPinViewModel = viewModel())
                 }
             }
 
-            if (isLoading)
-            {
+            if (isLoading) {
                 CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
             }
         }
 
-        // TODO: Your bottom sheet or navigation button to SuggestedTripsScreen
-        // (we'll replace bottom sheet in Step 2)
+        // Button to jump to SuggestedTripsScreen
+        if (viewModel.selectedPin.value != null) {
+            Button(
+                onClick = {
+                    val lat = viewModel.selectedPin.value!!.latitude
+                    val lng = viewModel.selectedPin.value!!.longitude
+                    navController.navigate("suggested_trips/$lat/$lng")
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+            ) {
+                Text("View Suggested Trips")
+            }
+        }
     }
 }
-

@@ -105,16 +105,18 @@ fun PaddleQuestApp()
             modifier = Modifier.padding(innerPadding)
         ) {
             composable(Screen.SignIn.route) { SignInScreen(navController) }
-            composable(Screen.Map.route) { MapScreen(viewModel = selectedPinViewModel) }
+            composable(Screen.Map.route) { MapScreen(navController = navController, viewModel = selectedPinViewModel) }
             composable(
                 route = Screen.FloatPlan.route + "?putIn={putIn}&takeOut={takeOut}",
                 arguments = listOf(
-                    navArgument("putIn") {
+                    navArgument("putIn")
+                    {
                         type = NavType.StringType
                         nullable = true
                         defaultValue = null
                     },
-                    navArgument("takeOut") {
+                    navArgument("takeOut")
+                    {
                         type = NavType.StringType
                         nullable = true
                         defaultValue = null
@@ -127,11 +129,17 @@ fun PaddleQuestApp()
             }
             composable(Screen.Weather.route) { WeatherScreen() }
             composable(Screen.Profile.route) { ProfileScreen() }
-            composable(Screen.SuggestedTripsScreen.route) {
+            composable(Screen.SuggestedTripsScreen.route)
+            {
                 val selectedLocation by selectedPinViewModel.selectedPin.observeAsState()
                 SuggestedTripsScreen(
                     selectedLocation = selectedLocation,
-                    navController = navController
+                    onDismiss = {
+                        navController.popBackStack()
+                    },
+                    onSelectTrip = { putIn, takeOut ->
+                        navController.navigate(Screen.FloatPlan.route + "?putIn=${putIn.accessName}&takeOut=${takeOut.accessName}")
+                    }
                 )
             }
             composable(Screen.Settings.route) { SettingsScreen() }
