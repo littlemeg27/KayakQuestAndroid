@@ -7,9 +7,12 @@ import androidx.compose.material.icons.filled.Create
 import androidx.compose.material.icons.filled.Login
 import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Place
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.outlined.AddCircle
+import androidx.compose.material.icons.outlined.Cloud
 import androidx.compose.material.icons.outlined.Create
+import androidx.compose.material.icons.outlined.Map
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.outlined.Place
 import androidx.compose.material.icons.outlined.Settings
@@ -19,11 +22,11 @@ import androidx.compose.ui.graphics.vector.ImageVector
 sealed class Screen(val route: String, val label: String, val icon: ImageVector)
 {
     object SignIn : Screen("signin", "Sign In", Icons.Default.Login)
-    object Map : Screen("map", "Map", Icons.Default.Map)
+    object Map : Screen("map", "Map", Icons.Default.Place)
     object FloatPlan : Screen("floatplan", "Float Plan", Icons.Default.Create)
     object Weather : Screen("weather", "Weather", Icons.Default.Cloud)
     object Profile : Screen("profile", "Profile", Icons.Default.Person)
-    object SuggestedTripsScreen : Screen("suggestedTripsScreen", "SuggestedTripsScreen", Icons.Default.AddCircle)
+    object SuggestedTripsScreen : Screen("suggestedTripsScreen", "Trips", Icons.Default.Map)
     object Settings : Screen("settings", "Settings", Icons.Default.Settings)
 }
 
@@ -46,8 +49,8 @@ val BottomNavItems = listOf(
     ),
     NavItem(
         screen = Screen.Weather,
-        unselectedIcon = Icons.Outlined.Warning,
-        hasNews = true  // shows badge
+        unselectedIcon = Icons.Outlined.Cloud,
+        hasNews = true
     ),
     NavItem(
         screen = Screen.Profile,
@@ -56,7 +59,7 @@ val BottomNavItems = listOf(
     ),
     NavItem(
         screen = Screen.SuggestedTripsScreen,
-        unselectedIcon = Icons.Outlined.AddCircle,
+        unselectedIcon = Icons.Outlined.Map,
         hasNews = false
     ),
     NavItem(

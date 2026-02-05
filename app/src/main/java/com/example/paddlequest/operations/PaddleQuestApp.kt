@@ -4,7 +4,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.AccountCircle
 import androidx.compose.material.icons.outlined.AddCircle
+import androidx.compose.material.icons.outlined.Cloud
 import androidx.compose.material.icons.outlined.Create
+import androidx.compose.material.icons.outlined.Map
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.outlined.Place
 import androidx.compose.material.icons.outlined.Settings
@@ -69,9 +71,9 @@ fun PaddleQuestApp()
                                 {
                                     is Screen.Map -> Icons.Outlined.Place
                                     is Screen.FloatPlan -> Icons.Outlined.Create
-                                    is Screen.Weather -> Icons.Outlined.Warning
+                                    is Screen.Weather -> Icons.Outlined.Cloud
                                     is Screen.Profile -> Icons.Outlined.Person
-                                    is Screen.SuggestedTripsScreen -> Icons.Outlined.AddCircle
+                                    is Screen.SuggestedTripsScreen -> Icons.Outlined.Map
                                     is Screen.Settings -> Icons.Outlined.Settings
                                     else -> Icons.Outlined.AccountCircle
                                 },
