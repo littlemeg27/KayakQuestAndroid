@@ -1,9 +1,13 @@
 package com.example.paddlequest.screens
 
 import android.Manifest
+import android.content.pm.PackageManager
 import android.util.Log
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
@@ -12,82 +16,82 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
+import androidx.navigation.NavController
 import com.example.paddlequest.ramps.MarkerData
 import com.example.paddlequest.ramps.groupRampsByWaterbody
 import com.example.paddlequest.ramps.haversineDistance
 import com.example.paddlequest.ramps.loadMarkersForState
-import com.google.accompanist.permissions.ExperimentalPermissionsApi
-import com.google.accompanist.permissions.rememberMultiplePermissionsState
-import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.location.LocationServices
+import com.google.android.gms.maps.model.LatLng
+import com.google.android.libraries.places.api.Places
+import com.google.android.libraries.places.api.model.Place
+import com.google.android.libraries.places.api.net.FindCurrentPlaceRequest
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.tasks.await
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
+import kotlinx.coroutines.withContext
 import java.util.Locale
 
-
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalPermissionsApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SuggestedTripsScreen(
-    selectedLocation: LatLng?,  // From map selection (fallback)
-    onDismiss: () -> Unit,
-    onSelectTrip: (MarkerData, MarkerData) -> Unit
+    selectedLocation: LatLng?,
+    navController: NavController
 ) {
     val context = LocalContext.current
-    val fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)
 
-    val locationPermissionsState = rememberMultiplePermissionsState(
-        listOf(
-            Manifest.permission.ACCESS_FINE_LOCATION,
-            Manifest.permission.ACCESS_COARSE_LOCATION
-        )
-    )
+    // Initialize Places SDK (do this once in app, but safe here too)
+    if (!Places.isInitialized()) {
+        Places.initialize(context, "YOUR_PLACES_API_KEY")  // ← replace with your key
+    }
 
     var currentLocation by remember { mutableStateOf<LatLng?>(null) }
+    var currentState by remember { mutableStateOf("Detecting...") }
+    var locationLoading by remember { mutableStateOf(true) }
     var locationError by remember { mutableStateOf<String?>(null) }
-    var isLoading by remember { mutableStateOf(true) }
 
-    // Request permission automatically
-    LaunchedEffect(Unit) {
-        if (!locationPermissionsState.allPermissionsGranted) {
-            locationPermissionsState.launchMultiplePermissionRequest()
-        }
-    }
-
-    // Load location when permission status changes
-    LaunchedEffect(locationPermissionsState.allPermissionsGranted) {
-        isLoading = true
-        if (locationPermissionsState.allPermissionsGranted) {
-            try {
-                val location = fusedLocationClient.lastLocation.await()
-                if (location != null) {
-                    currentLocation = LatLng(location.latitude, location.longitude)
-                } else {
-                    locationError = "No location data available"
-                }
-            } catch (e: SecurityException) {
-                locationError = "Location permission denied"
-                Log.e("SuggestedTrips", "SecurityException: ${e.message}", e)  // ← use 'e'
-            } catch (e: Exception) {
-                locationError = "Failed to get location: ${e.message}"
-                Log.e("SuggestedTrips", "Location error", e)  // ← use 'e'
-            }
-        } else {
-            currentLocation = selectedLocation
-            locationError = "Using selected map location (permission denied)"
-        }
-        isLoading = false
-    }
-
-    // Markers loading (example state — make dynamic later)
     var markers by remember { mutableStateOf(emptyList<MarkerData>()) }
     var isLoadingMarkers by remember { mutableStateOf(true) }
 
+    // Permission launcher
+    val permissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissions ->
+        if (permissions.all { it.value }) {
+            // Permission granted → load location
+            coroutineScope.launch {
+                loadCurrentLocation()
+            }
+        } else {
+            locationError = "Location permission denied"
+            currentLocation = selectedLocation
+            locationLoading = false
+        }
+    }
+
+    // Check and request permissions
     LaunchedEffect(Unit) {
-        isLoadingMarkers = true
-        markers = loadMarkersForState(context, "Georgia")  // ← change to dynamic state later
-        isLoadingMarkers = false
+        val hasFine = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
+        val hasCoarse = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
+
+        if (hasFine || hasCoarse) {
+            loadCurrentLocation()
+        } else {
+            permissionLauncher.launch(arrayOf(
+                Manifest.permission.ACCESS_FINE_LOCATION,
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            ))
+        }
+    }
+
+    // Load markers based on current state
+    LaunchedEffect(currentState) {
+        if (currentState != "Detecting..." && currentState != "No location") {
+            isLoadingMarkers = true
+            markers = loadMarkersForState(context, currentState)
+            isLoadingMarkers = false
+        }
     }
 
     val effectiveLocation = currentLocation ?: selectedLocation
@@ -97,7 +101,7 @@ fun SuggestedTripsScreen(
             TopAppBar(
                 title = { Text("Suggested Trips") },
                 navigationIcon = {
-                    IconButton(onClick = onDismiss) {
+                    IconButton(onClick = { navController.popBackStack() }) {
                         Icon(Icons.AutoMirrored.Default.ArrowBack, "Back")
                     }
                 }
@@ -110,31 +114,21 @@ fun SuggestedTripsScreen(
                 .padding(padding)
                 .padding(16.dp)
         ) {
-            // Permission feedback
-            if (locationPermissionsState.shouldShowRationale) {
-                Text(
-                    "Location permission is needed to show trips near you.",
-                    color = MaterialTheme.colorScheme.error,
-                    style = MaterialTheme.typography.bodyMedium
-                )
+            if (locationError != null) {
+                Text(locationError!!, color = MaterialTheme.colorScheme.error)
                 Spacer(Modifier.height(8.dp))
-                Button(onClick = { locationPermissionsState.launchMultiplePermissionRequest() }) {
-                    Text("Grant Permission")
+                Button(onClick = {
+                    permissionLauncher.launch(arrayOf(
+                        Manifest.permission.ACCESS_FINE_LOCATION,
+                        Manifest.permission.ACCESS_COARSE_LOCATION
+                    ))
+                }) {
+                    Text("Retry Permission")
                 }
-                Spacer(Modifier.height(16.dp))
-            } else if (!locationPermissionsState.allPermissionsGranted) {
-                Text("Location permission required for personalized suggestions.")
-                Spacer(Modifier.height(8.dp))
-                Button(onClick = { locationPermissionsState.launchMultiplePermissionRequest() }) {
-                    Text("Grant Permission")
-                }
-                Spacer(Modifier.height(16.dp))
             }
 
-            if (isLoading || isLoadingMarkers) {
+            if (locationLoading) {
                 CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
-            } else if (locationError != null) {
-                Text(locationError ?: "Unknown error", color = MaterialTheme.colorScheme.error)
             } else if (effectiveLocation == null) {
                 Text("No location available. Select a pin on the map.")
             } else {
@@ -149,11 +143,8 @@ fun SuggestedTripsScreen(
 
                     grouped.forEach { group ->
                         item {
-                            Text(
-                                text = group.waterbody,
-                                style = MaterialTheme.typography.titleLarge,
-                                modifier = Modifier.padding(top = 16.dp, bottom = 8.dp)
-                            )
+                            Text(group.waterbody, style = MaterialTheme.typography.titleLarge)
+                            Spacer(Modifier.height(8.dp))
                         }
 
                         val sortedRamps = group.ramps.sortedBy { haversineDistance(effectiveLocation, it.getLatLng()) }
@@ -171,12 +162,9 @@ fun SuggestedTripsScreen(
                                     modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp)
                                 ) {
                                     Column(modifier = Modifier.padding(16.dp)) {
-                                        Text(
-                                            "${putIn.accessName} → ${takeOut.accessName}",
-                                            style = MaterialTheme.typography.titleMedium
-                                        )
+                                        Text("${putIn.accessName} → ${takeOut.accessName}", style = MaterialTheme.typography.titleMedium)
                                         Text("Distance: ${String.format(Locale.US, "%.1f", distanceMiles)} miles")
-                                        Text("Estimated paddle time: $minTime–$maxTime hours")
+                                        Text("Estimated time: $minTime–$maxTime hours")
                                         Text("River: ${putIn.riverName}")
                                         Text("Type: ${putIn.type} • ${putIn.county}, ${putIn.state}")
                                     }
@@ -191,6 +179,29 @@ fun SuggestedTripsScreen(
             Button(onClick = onDismiss, modifier = Modifier.fillMaxWidth()) {
                 Text("Close")
             }
+        }
+    }
+
+    // Suspend function to load location
+    suspend fun loadCurrentLocation() {
+        isLoading = true
+        try {
+            val location = fusedLocationClient.lastLocation.await()
+            if (location != null) {
+                currentLocation = LatLng(location.latitude, location.longitude)
+                val state = getStateFromLatLng(context, currentLocation!!)
+                currentState = state ?: "Unknown"
+            } else {
+                currentState = "No location"
+            }
+        } catch (e: SecurityException) {
+            locationError = "Location permission denied"
+            currentLocation = selectedLocation
+        } catch (e: Exception) {
+            locationError = "Failed to get location"
+            currentLocation = selectedLocation
+        } finally {
+            isLoading = false
         }
     }
 }

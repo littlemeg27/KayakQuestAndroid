@@ -1,38 +1,57 @@
 package com.example.paddlequest.screens
 
+import android.Manifest
+import android.content.Context
+import android.content.pm.PackageManager
+import android.util.Log
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import com.example.paddlequest.ramps.MarkerData
-import com.example.paddlequest.ramps.SelectedPinViewModel
+import com.example.paddlequest.operations.MarkerData
+import com.example.paddlequest.operations.SelectedPinViewModel
 import com.example.paddlequest.ramps.loadMarkersForState
-
+import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.places.Place
+import com.google.android.gms.maps.CameraUpdateFactory
+import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
+import com.google.android.libraries.places.api.Places
+import com.google.android.libraries.places.api.model.Place
+import com.google.android.libraries.places.api.net.FindCurrentPlaceRequest
 import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.rememberCameraPositionState
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MapScreen(
-    navController: NavController,
-    viewModel: SelectedPinViewModel = viewModel()
-)
-{
+fun MapScreen(navController: NavController) {
     val context = LocalContext.current
+    val viewModel: SelectedPinViewModel = viewModel()
 
-    // State selector (dropdown)
-    var selectedState by remember { mutableStateOf("North Carolina") }
+    // Current device location from GPS
+    var currentLocation by remember { mutableStateOf<LatLng?>(null) }
+    var currentState by remember { mutableStateOf("Detecting...") }
+    var isLoadingLocation by remember { mutableStateOf(true) }
+
+    // User-selected state override (null = use current)
+    var selectedState by remember { mutableStateOf<String?>(null) }
     var expanded by remember { mutableStateOf(false) }
 
     val availableStates = listOf(
@@ -45,36 +64,83 @@ fun MapScreen(
         "Virginia", "Washington", "West Virginia", "Wisconsin", "Wyoming"
     )
 
+    // Markers for current/selected state
     var markers by remember { mutableStateOf(emptyList<MarkerData>()) }
-    var isLoading by remember { mutableStateOf(true) }
+    var isLoadingMarkers by remember { mutableStateOf(true) }
 
-    // Reload markers when state changes
-    LaunchedEffect(selectedState) {
-        isLoading = true
-        markers = loadMarkersForState(context, selectedState)
-        isLoading = false
+    // Permission launcher
+    val permissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissions ->
+        if (permissions.all { it.value }) {
+            coroutineScope.launch {
+                loadCurrentLocation()
+            }
+        } else {
+            currentState = "Permission denied"
+            isLoadingLocation = false
+        }
+    }
+
+    // Check and request permissions on first open
+    LaunchedEffect(Unit) {
+        val hasFine = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
+        val hasCoarse = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
+
+        if (hasFine || hasCoarse) {
+            loadCurrentLocation()
+        } else {
+            permissionLauncher.launch(arrayOf(
+                Manifest.permission.ACCESS_FINE_LOCATION,
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            ))
+        }
+    }
+
+    // Load markers for selected state (or current if none selected)
+    LaunchedEffect(selectedState, currentState) {
+        isLoadingMarkers = true
+        val stateToLoad = selectedState ?: currentState
+        if (stateToLoad != "Detecting..." && stateToLoad != "No location" && stateToLoad != "Location error" && stateToLoad != "Permission denied") {
+            markers = loadMarkersForState(context, stateToLoad)
+        } else {
+            markers = emptyList()
+        }
+        isLoadingMarkers = false
     }
 
     val cameraPositionState = rememberCameraPositionState {
-        position = CameraPosition.fromLatLngZoom(LatLng(35.227085, -80.843124), 10f)
+        position = CameraPosition.fromLatLngZoom(LatLng(33.7490, -84.3880), 10f)  // Atlanta default
     }
 
+    // Center map on current location when available
+    LaunchedEffect(currentLocation) {
+        currentLocation?.let { loc ->
+            cameraPositionState.animate(
+                update = CameraPosition.fromLatLngZoom(loc, 12f),
+                durationMs = 1000
+            )
+        }
+    }
+
+    val selectedPin by viewModel.selectedPin.observeAsState()
+
     Column(modifier = Modifier.fillMaxSize()) {
-        // State dropdown
+        // State selector dropdown
         ExposedDropdownMenuBox(
             expanded = expanded,
             onExpandedChange = { expanded = !expanded }
         ) {
             OutlinedTextField(
                 readOnly = true,
-                value = selectedState,
+                value = selectedState ?: currentState,
                 onValueChange = { },
-                label = { Text("Select State") },
+                label = { Text("State") },
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(16.dp)
-                    .menuAnchor()
+                    .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryEditable)
             )
 
             ExposedDropdownMenu(
@@ -90,6 +156,13 @@ fun MapScreen(
                         }
                     )
                 }
+                DropdownMenuItem(
+                    text = { Text("Use Current Location") },
+                    onClick = {
+                        selectedState = null
+                        expanded = false
+                    }
+                )
             }
         }
 
@@ -101,44 +174,87 @@ fun MapScreen(
                     viewModel.setSelectedPin(latLng)
                 }
             ) {
+                // Current location marker (blue dot)
+                currentLocation?.let { loc ->
+                    Marker(
+                        state = MarkerState(position = loc),
+                        title = "Current Location",
+                        icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)
+                    )
+                }
+
                 markers.forEach { marker ->
                     Marker(
                         state = MarkerState(position = LatLng(marker.latitude, marker.longitude)),
-                        title = marker.accessName.ifBlank { "Unnamed Access" },
+                        title = marker.accessName.ifBlank { "Unnamed" },
                         snippet = buildString {
-                            append(marker.riverName.ifBlank { "No river specified" })
+                            append(marker.riverName.ifBlank { "No river" })
                             if (marker.otherName.isNotBlank()) append(" • ${marker.otherName}")
-                            append("\n${marker.type}")
-                            append(" • ${marker.county}, ${marker.state}")
-                            if (marker.department.isNotBlank()) append("\n${marker.department}")
-                        },
-                        onClick = { clickedMarker ->
-                            viewModel.setSelectedPin(clickedMarker.position)
-                            false
+                            append("\n${marker.type} • ${marker.county}, ${marker.state}")
                         }
                     )
                 }
             }
 
-            if (isLoading) {
+            if (isLoadingLocation || isLoadingMarkers) {
                 CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
             }
         }
 
-        // Button to jump to SuggestedTripsScreen
-        if (viewModel.selectedPin.value != null) {
-            Button(
-                onClick = {
-                    val lat = viewModel.selectedPin.value!!.latitude
-                    val lng = viewModel.selectedPin.value!!.longitude
-                    navController.navigate("suggested_trips/$lat/$lng")
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp)
-            ) {
-                Text("View Suggested Trips")
+        // Button to SuggestedTripsScreen
+        Button(
+            onClick = {
+                val loc = currentLocation ?: viewModel.selectedPin.value
+                if (loc != null) {
+                    navController.navigate("suggested_trips/${loc.latitude}/${loc.longitude}")
+                } else {
+                    Toast.makeText(context, "No location available", Toast.LENGTH_SHORT).show()
+                }
+            },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+        ) {
+            Text("Suggest Trips Near Current Location")
+        }
+    }
+
+    // Suspend function to load current location
+    suspend fun loadCurrentLocation() {
+        isLoadingLocation = true
+        try {
+            val location = fusedLocationClient.lastLocation.await()
+            if (location != null) {
+                currentLocation = LatLng(location.latitude, location.longitude)
+                val state = getStateFromLatLng(context, currentLocation!!)
+                currentState = state ?: "Unknown"
+            } else {
+                currentState = "No location"
             }
+        } catch (e: SecurityException) {
+            locationError = "Location permission denied"
+            currentLocation = selectedLocation
+        } catch (e: Exception) {
+            locationError = "Failed to get location"
+            currentLocation = selectedLocation
+        } finally {
+            isLoadingLocation = false
+        }
+    }
+}
+
+// Helper function for reverse geocoding (add this at the bottom)
+suspend fun getStateFromLatLng(context: Context, latLng: LatLng): String? {
+    return withContext(Dispatchers.IO) {
+        try {
+            val placesClient = Places.createClient(context)
+            val request = FindCurrentPlaceRequest.newInstance(listOf(Place.Field.ADDRESS_COMPONENTS))
+            val response = placesClient.findCurrentPlace(request).await()
+            response.placeLikelihoods.firstOrNull()?.place?.addressComponents?.asList()
+                ?.find { it.types.contains("administrative_area_level_1") }?.name
+        } catch (e: Exception) {
+            Log.e("Geocode", "Failed to get state", e)
+            null
         }
     }
 }

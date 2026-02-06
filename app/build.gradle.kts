@@ -82,6 +82,8 @@ dependencies {
     implementation(libs.androidx.webkit)
     implementation(libs.androidx.compose.foundation)
     implementation(libs.androidx.material3)
+    implementation(libs.places)
+    implementation(libs.play.services.places)
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
 
