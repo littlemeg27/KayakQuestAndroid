@@ -1,6 +1,7 @@
 package com.example.paddlequest.screens
 
 import android.Manifest
+import android.content.Context
 import android.content.pm.PackageManager
 import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -28,7 +29,7 @@ import com.google.android.libraries.places.api.Places
 import com.google.android.libraries.places.api.model.Place
 import com.google.android.libraries.places.api.net.FindCurrentPlaceRequest
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
 import java.util.Locale
@@ -37,14 +38,13 @@ import java.util.Locale
 @Composable
 fun SuggestedTripsScreen(
     selectedLocation: LatLng?,
-    navController: NavController
+    navController: NavController,
+    onDismiss: () -> Unit,
+    onSelectTrip: (MarkerData, MarkerData) -> Unit
 ) {
     val context = LocalContext.current
-
-    // Initialize Places SDK (do this once in app, but safe here too)
-    if (!Places.isInitialized()) {
-        Places.initialize(context, "YOUR_PLACES_API_KEY")  // ← replace with your key
-    }
+    val scope = rememberCoroutineScope()
+    val fusedLocationClient = remember { LocationServices.getFusedLocationProviderClient(context) }
 
     var currentLocation by remember { mutableStateOf<LatLng?>(null) }
     var currentState by remember { mutableStateOf("Detecting...") }
@@ -54,14 +54,37 @@ fun SuggestedTripsScreen(
     var markers by remember { mutableStateOf(emptyList<MarkerData>()) }
     var isLoadingMarkers by remember { mutableStateOf(true) }
 
+    // Suspend function to load location
+    suspend fun loadCurrentLocationInternal() {
+        locationLoading = true
+        try {
+            val location = fusedLocationClient.lastLocation.await()
+            if (location != null) {
+                currentLocation = LatLng(location.latitude, location.longitude)
+                val state = getStateFromLatLng(context, currentLocation!!)
+                currentState = state ?: "Unknown"
+            } else {
+                currentState = "No location"
+            }
+        } catch (e: SecurityException) {
+            locationError = "Location permission denied"
+            currentLocation = selectedLocation
+        } catch (e: Exception) {
+            locationError = "Failed to get location"
+            currentLocation = selectedLocation
+            Log.e("SuggestedTrips", "Error loading location", e)
+        } finally {
+            locationLoading = false
+        }
+    }
+
     // Permission launcher
     val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { permissions ->
         if (permissions.all { it.value }) {
-            // Permission granted → load location
-            coroutineScope.launch {
-                loadCurrentLocation()
+            scope.launch {
+                loadCurrentLocationInternal()
             }
         } else {
             locationError = "Location permission denied"
@@ -76,7 +99,7 @@ fun SuggestedTripsScreen(
         val hasCoarse = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
 
         if (hasFine || hasCoarse) {
-            loadCurrentLocation()
+            loadCurrentLocationInternal()
         } else {
             permissionLauncher.launch(arrayOf(
                 Manifest.permission.ACCESS_FINE_LOCATION,
@@ -87,7 +110,7 @@ fun SuggestedTripsScreen(
 
     // Load markers based on current state
     LaunchedEffect(currentState) {
-        if (currentState != "Detecting..." && currentState != "No location") {
+        if (currentState != "Detecting..." && currentState != "No location" && currentState != "Location error" && currentState != "Permission denied") {
             isLoadingMarkers = true
             markers = loadMarkersForState(context, currentState)
             isLoadingMarkers = false
@@ -138,35 +161,44 @@ fun SuggestedTripsScreen(
                 )
                 Spacer(Modifier.height(16.dp))
 
-                LazyColumn {
-                    val grouped = groupRampsByWaterbody(markers)
+                if (isLoadingMarkers) {
+                    CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
+                } else {
+                    LazyColumn {
+                        val grouped = groupRampsByWaterbody(markers)
 
-                    grouped.forEach { group ->
-                        item {
-                            Text(group.waterbody, style = MaterialTheme.typography.titleLarge)
-                            Spacer(Modifier.height(8.dp))
-                        }
-
-                        val sortedRamps = group.ramps.sortedBy { haversineDistance(effectiveLocation, it.getLatLng()) }
-
-                        sortedRamps.windowed(size = 2, step = 1).forEach { (putIn, takeOut) ->
-                            val distanceKm = haversineDistance(putIn.getLatLng(), takeOut.getLatLng())
-                            val distanceMiles = distanceKm * 0.621371
-
-                            val minTime = (distanceMiles / 4).toInt().coerceAtLeast(1)
-                            val maxTime = (distanceMiles / 2).toInt().coerceAtLeast(minTime)
-
+                        grouped.forEach { group ->
                             item {
-                                Card(
-                                    onClick = { onSelectTrip(putIn, takeOut) },
-                                    modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp)
-                                ) {
-                                    Column(modifier = Modifier.padding(16.dp)) {
-                                        Text("${putIn.accessName} → ${takeOut.accessName}", style = MaterialTheme.typography.titleMedium)
-                                        Text("Distance: ${String.format(Locale.US, "%.1f", distanceMiles)} miles")
-                                        Text("Estimated time: $minTime–$maxTime hours")
-                                        Text("River: ${putIn.riverName}")
-                                        Text("Type: ${putIn.type} • ${putIn.county}, ${putIn.state}")
+                                Text(group.waterbody, style = MaterialTheme.typography.titleLarge)
+                                Spacer(Modifier.height(8.dp))
+                            }
+
+                            val sortedRamps = group.ramps.sortedBy { haversineDistance(effectiveLocation, it.getLatLng()) }
+
+                            sortedRamps.windowed(size = 2, step = 1).forEach { (putIn, takeOut) ->
+                                val distanceKm = haversineDistance(putIn.getLatLng(), takeOut.getLatLng())
+                                val distanceMiles = distanceKm * 0.621371
+
+                                val minTime = (distanceMiles / 4).toInt().coerceAtLeast(1)
+                                val maxTime = (distanceMiles / 2).toInt().coerceAtLeast(minTime)
+
+                                item {
+                                    Card(
+                                        onClick = { onSelectTrip(putIn, takeOut) },
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(vertical = 6.dp)
+                                    ) {
+                                        Column(modifier = Modifier.padding(16.dp)) {
+                                            Text(
+                                                "${putIn.accessName} → ${takeOut.accessName}",
+                                                style = MaterialTheme.typography.titleMedium
+                                            )
+                                            Text("Distance: ${String.format(Locale.US, "%.1f", distanceMiles)} miles")
+                                            Text("Estimated time: $minTime–$maxTime hours")
+                                            Text("River: ${putIn.riverName}")
+                                            Text("Type: ${putIn.type} • ${putIn.county}, ${putIn.state}")
+                                        }
                                     }
                                 }
                             }
@@ -175,33 +207,10 @@ fun SuggestedTripsScreen(
                 }
             }
 
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.weight(1f))
             Button(onClick = onDismiss, modifier = Modifier.fillMaxWidth()) {
                 Text("Close")
             }
-        }
-    }
-
-    // Suspend function to load location
-    suspend fun loadCurrentLocation() {
-        isLoading = true
-        try {
-            val location = fusedLocationClient.lastLocation.await()
-            if (location != null) {
-                currentLocation = LatLng(location.latitude, location.longitude)
-                val state = getStateFromLatLng(context, currentLocation!!)
-                currentState = state ?: "Unknown"
-            } else {
-                currentState = "No location"
-            }
-        } catch (e: SecurityException) {
-            locationError = "Location permission denied"
-            currentLocation = selectedLocation
-        } catch (e: Exception) {
-            locationError = "Failed to get location"
-            currentLocation = selectedLocation
-        } finally {
-            isLoading = false
         }
     }
 }

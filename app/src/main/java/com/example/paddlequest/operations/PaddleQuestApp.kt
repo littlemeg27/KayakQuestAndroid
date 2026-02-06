@@ -132,6 +132,7 @@ fun PaddleQuestApp()
                 val selectedLocation by selectedPinViewModel.selectedPin.observeAsState()
                 SuggestedTripsScreen(
                     selectedLocation = selectedLocation,
+                    navController = navController,
                     onDismiss = {
                         navController.popBackStack()
                     },

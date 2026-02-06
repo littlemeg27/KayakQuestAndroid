@@ -4,6 +4,7 @@ import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
 import android.util.Log
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
@@ -18,23 +19,24 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import com.example.paddlequest.operations.MarkerData
-import com.example.paddlequest.operations.SelectedPinViewModel
+import com.example.paddlequest.ramps.MarkerData
+import com.example.paddlequest.ramps.SelectedPinViewModel
 import com.example.paddlequest.ramps.loadMarkersForState
 import com.google.android.gms.location.LocationServices
-import com.google.android.gms.location.places.Place
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.libraries.places.api.Places
 import com.google.android.libraries.places.api.model.Place
+import com.google.android.libraries.places.api.net.PlacesClient
 import com.google.android.libraries.places.api.net.FindCurrentPlaceRequest
 import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.rememberCameraPositionState
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
 import java.util.Locale
@@ -43,7 +45,10 @@ import java.util.Locale
 @Composable
 fun MapScreen(navController: NavController) {
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
     val viewModel: SelectedPinViewModel = viewModel()
+
+    val fusedLocationClient = remember { LocationServices.getFusedLocationProviderClient(context) }
 
     // Current device location from GPS
     var currentLocation by remember { mutableStateOf<LatLng?>(null) }
@@ -73,8 +78,8 @@ fun MapScreen(navController: NavController) {
         ActivityResultContracts.RequestMultiplePermissions()
     ) { permissions ->
         if (permissions.all { it.value }) {
-            coroutineScope.launch {
-                loadCurrentLocation()
+            scope.launch {
+                loadCurrentLocation(context, fusedLocationClient)
             }
         } else {
             currentState = "Permission denied"
@@ -88,7 +93,7 @@ fun MapScreen(navController: NavController) {
         val hasCoarse = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
 
         if (hasFine || hasCoarse) {
-            loadCurrentLocation()
+            loadCurrentLocation(context, fusedLocationClient)
         } else {
             permissionLauncher.launch(arrayOf(
                 Manifest.permission.ACCESS_FINE_LOCATION,
@@ -117,13 +122,13 @@ fun MapScreen(navController: NavController) {
     LaunchedEffect(currentLocation) {
         currentLocation?.let { loc ->
             cameraPositionState.animate(
-                update = CameraPosition.fromLatLngZoom(loc, 12f),
+                update = CameraUpdateFactory.newLatLngZoom(loc, 12f),
                 durationMs = 1000
             )
         }
     }
 
-    val selectedPin by viewModel.selectedPin.observeAsState()
+    val selectedPin by viewModel.selectedPin.collectAsState()  // Assuming StateFlow now
 
     Column(modifier = Modifier.fillMaxSize()) {
         // State selector dropdown
@@ -204,7 +209,7 @@ fun MapScreen(navController: NavController) {
         // Button to SuggestedTripsScreen
         Button(
             onClick = {
-                val loc = currentLocation ?: viewModel.selectedPin.value
+                val loc = currentLocation ?: selectedPin
                 if (loc != null) {
                     navController.navigate("suggested_trips/${loc.latitude}/${loc.longitude}")
                 } else {
@@ -215,35 +220,39 @@ fun MapScreen(navController: NavController) {
                 .fillMaxWidth()
                 .padding(16.dp)
         ) {
-            Text("Suggest Trips Near Current Location")
-        }
-    }
-
-    // Suspend function to load current location
-    suspend fun loadCurrentLocation() {
-        isLoadingLocation = true
-        try {
-            val location = fusedLocationClient.lastLocation.await()
-            if (location != null) {
-                currentLocation = LatLng(location.latitude, location.longitude)
-                val state = getStateFromLatLng(context, currentLocation!!)
-                currentState = state ?: "Unknown"
-            } else {
-                currentState = "No location"
-            }
-        } catch (e: SecurityException) {
-            locationError = "Location permission denied"
-            currentLocation = selectedLocation
-        } catch (e: Exception) {
-            locationError = "Failed to get location"
-            currentLocation = selectedLocation
-        } finally {
-            isLoadingLocation = false
+            Text("Suggest Trips Near Location")
         }
     }
 }
 
-// Helper function for reverse geocoding (add this at the bottom)
+// Helper function to load current location (explicit permission check)
+suspend fun loadCurrentLocation(context: Context, fusedLocationClient: com.google.android.gms.location.FusedLocationProviderClient) {
+    if (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
+        ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+        Log.e("MapScreen", "Location permission not granted")
+        return
+    }
+
+    try {
+        val location = fusedLocationClient.lastLocation.await()
+        if (location != null) {
+            val latLng = LatLng(location.latitude, location.longitude)
+            currentLocation = latLng
+            val state = getStateFromLatLng(context, latLng)
+            currentState = state ?: "Unknown"
+        } else {
+            currentState = "No location"
+        }
+    } catch (e: SecurityException) {
+        currentState = "Permission denied"
+        Log.e("MapScreen", "SecurityException: ${e.message}", e)
+    } catch (e: Exception) {
+        currentState = "Location error"
+        Log.e("MapScreen", "Error getting location", e)
+    }
+}
+
+// Helper function for reverse geocoding
 suspend fun getStateFromLatLng(context: Context, latLng: LatLng): String? {
     return withContext(Dispatchers.IO) {
         try {
