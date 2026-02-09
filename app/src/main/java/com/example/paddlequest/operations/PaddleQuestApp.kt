@@ -103,7 +103,7 @@ fun PaddleQuestApp()
             modifier = Modifier.padding(innerPadding)
         ) {
             composable(Screen.SignIn.route) { SignInScreen(navController) }
-            composable(Screen.Map.route) { MapScreen(navController = navController, viewModel = selectedPinViewModel) }
+            composable(Screen.Map.route) { MapScreen(navController = navController, selectedPinViewModel = selectedPinViewModel) }
             composable(
                 route = Screen.FloatPlan.route + "?putIn={putIn}&takeOut={takeOut}",
                 arguments = listOf(

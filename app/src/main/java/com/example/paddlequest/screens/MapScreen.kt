@@ -8,10 +8,9 @@ import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -29,7 +28,6 @@ import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.libraries.places.api.Places
 import com.google.android.libraries.places.api.model.Place
-import com.google.android.libraries.places.api.net.PlacesClient
 import com.google.android.libraries.places.api.net.FindCurrentPlaceRequest
 import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.Marker
@@ -39,14 +37,16 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
-import java.util.Locale
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MapScreen(navController: NavController) {
+fun MapScreen(
+    navController: NavController,
+    selectedPinViewModel: SelectedPinViewModel = viewModel()
+) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    val viewModel: SelectedPinViewModel = viewModel()
 
     val fusedLocationClient = remember { LocationServices.getFusedLocationProviderClient(context) }
 
@@ -73,13 +73,40 @@ fun MapScreen(navController: NavController) {
     var markers by remember { mutableStateOf(emptyList<MarkerData>()) }
     var isLoadingMarkers by remember { mutableStateOf(true) }
 
+    // Helper function to load current location (explicit permission check)
+    suspend fun loadCurrentLocation() {
+        if (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
+            ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            Log.e("MapScreen", "Location permission not granted")
+            return
+        }
+
+        try {
+            val location = fusedLocationClient.lastLocation.await()
+            if (location != null) {
+                val latLng = LatLng(location.latitude, location.longitude)
+                currentLocation = latLng
+                val state = getStateFromLatLng(context, latLng)
+                currentState = state ?: "Unknown"
+            } else {
+                currentState = "No location"
+            }
+        } catch (e: SecurityException) {
+            currentState = "Permission denied"
+            Log.e("MapScreen", "SecurityException: ${e.message}", e)
+        } catch (e: Exception) {
+            currentState = "Location error"
+            Log.e("MapScreen", "Error getting location", e)
+        }
+    }
+
     // Permission launcher
     val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { permissions ->
         if (permissions.all { it.value }) {
             scope.launch {
-                loadCurrentLocation(context, fusedLocationClient)
+                loadCurrentLocation()
             }
         } else {
             currentState = "Permission denied"
@@ -93,7 +120,7 @@ fun MapScreen(navController: NavController) {
         val hasCoarse = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
 
         if (hasFine || hasCoarse) {
-            loadCurrentLocation(context, fusedLocationClient)
+            loadCurrentLocation()
         } else {
             permissionLauncher.launch(arrayOf(
                 Manifest.permission.ACCESS_FINE_LOCATION,
@@ -128,7 +155,7 @@ fun MapScreen(navController: NavController) {
         }
     }
 
-    val selectedPin by viewModel.selectedPin.collectAsState()  // Assuming StateFlow now
+    val selectedPin by selectedPinViewModel.selectedPin.observeAsState()
 
     Column(modifier = Modifier.fillMaxSize()) {
         // State selector dropdown
@@ -176,7 +203,7 @@ fun MapScreen(navController: NavController) {
                 modifier = Modifier.fillMaxSize(),
                 cameraPositionState = cameraPositionState,
                 onMapClick = { latLng ->
-                    viewModel.setSelectedPin(latLng)
+                    selectedPinViewModel.setSelectedPin(latLng)
                 }
             ) {
                 // Current location marker (blue dot)
@@ -225,36 +252,13 @@ fun MapScreen(navController: NavController) {
     }
 }
 
-// Helper function to load current location (explicit permission check)
-suspend fun loadCurrentLocation(context: Context, fusedLocationClient: com.google.android.gms.location.FusedLocationProviderClient) {
-    if (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
-        ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-        Log.e("MapScreen", "Location permission not granted")
-        return
-    }
-
-    try {
-        val location = fusedLocationClient.lastLocation.await()
-        if (location != null) {
-            val latLng = LatLng(location.latitude, location.longitude)
-            currentLocation = latLng
-            val state = getStateFromLatLng(context, latLng)
-            currentState = state ?: "Unknown"
-        } else {
-            currentState = "No location"
-        }
-    } catch (e: SecurityException) {
-        currentState = "Permission denied"
-        Log.e("MapScreen", "SecurityException: ${e.message}", e)
-    } catch (e: Exception) {
-        currentState = "Location error"
-        Log.e("MapScreen", "Error getting location", e)
-    }
-}
-
 // Helper function for reverse geocoding
 suspend fun getStateFromLatLng(context: Context, latLng: LatLng): String? {
     return withContext(Dispatchers.IO) {
+        if (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
+            ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            return@withContext null
+        }
         try {
             val placesClient = Places.createClient(context)
             val request = FindCurrentPlaceRequest.newInstance(listOf(Place.Field.ADDRESS_COMPONENTS))
