@@ -19,6 +19,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.navigation.NavController
+import com.example.paddlequest.location.getStateFromLatLng
 import com.example.paddlequest.ramps.MarkerData
 import com.example.paddlequest.ramps.groupRampsByWaterbody
 import com.example.paddlequest.ramps.haversineDistance
@@ -208,6 +209,7 @@ fun SuggestedTripsScreen(
             }
 
             Spacer(Modifier.weight(1f))
+
             Button(onClick = onDismiss, modifier = Modifier.fillMaxWidth()) {
                 Text("Close")
             }
