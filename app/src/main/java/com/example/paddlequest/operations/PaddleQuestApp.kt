@@ -130,8 +130,10 @@ fun PaddleQuestApp()
             composable(Screen.SuggestedTripsScreen.route)
             {
                 val selectedLocation by selectedPinViewModel.selectedPin.observeAsState()
+                val selectedState by selectedPinViewModel.selectedState.observeAsState()
                 SuggestedTripsScreen(
                     selectedLocation = selectedLocation,
+                    selectedStateFromMap = selectedState,
                     navController = navController,
                     onDismiss = {
                         navController.popBackStack()

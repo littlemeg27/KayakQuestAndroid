@@ -92,6 +92,7 @@ fun MapScreen(
                 currentLocation = latLng
                 val state = getStateFromLatLng(context, latLng)
                 currentState = state ?: "Unknown state"
+                selectedPinViewModel.setSelectedState(currentState)
                 Log.d("MapScreen", "Device location set: $latLng, state=$currentState")
             } else {
                 currentState = "No recent location"
@@ -177,6 +178,7 @@ fun MapScreen(
     // ───────────────────────────────────────────────
     LaunchedEffect(selectedState) {
         selectedState?.let { state ->
+            selectedPinViewModel.setSelectedState(state)
             val stateCenter = when (state.lowercase()) {
                 "alabama" -> LatLng(32.3182, -86.9023)
                 "alaska" -> LatLng(64.2008, -149.4937)
@@ -416,7 +418,6 @@ fun MapScreen(
             onClick = {
                 val loc = currentLocation ?: selectedPin
                 if (loc != null) {
-                    selectedPinViewModel.setSelectedPin(loc)
                     navController.navigate(Screen.SuggestedTripsScreen.route)
                 } else {
                     Toast.makeText(context, "No location available", Toast.LENGTH_SHORT).show()
