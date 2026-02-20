@@ -37,9 +37,7 @@ fun SuggestedTripsScreen(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
-    // ───────────────────────────────────────────────
     // State
-    // ───────────────────────────────────────────────
     var effectiveLocation by remember { mutableStateOf(selectedLocation) }
     var currentState by remember { mutableStateOf(selectedStateFromMap ?: "Detecting…") }
     var locationLoading by remember { mutableStateOf(selectedLocation == null && selectedStateFromMap == null) }
@@ -48,9 +46,8 @@ fun SuggestedTripsScreen(
     var markers by remember { mutableStateOf(emptyList<MarkerData>()) }
     var isLoadingMarkers by remember { mutableStateOf(true) }
 
-    // ───────────────────────────────────────────────
+
     // Use passed data first (dropdown state > pin location > device GPS)
-    // ───────────────────────────────────────────────
     LaunchedEffect(selectedLocation, selectedStateFromMap) {
         Log.d("SuggestedTrips", "Screen loaded - pin=$selectedLocation, state from map=$selectedStateFromMap")
 
@@ -104,9 +101,7 @@ fun SuggestedTripsScreen(
         }
     }
 
-    // ───────────────────────────────────────────────
     // Load ramps/markers
-    // ───────────────────────────────────────────────
     LaunchedEffect(key1 = currentState, key2 = effectiveLocation) {
         Log.d("SuggestedTrips", "Loading markers → state='$currentState', loc=$effectiveLocation")
 
@@ -147,9 +142,7 @@ fun SuggestedTripsScreen(
         }
     }
 
-    // ───────────────────────────────────────────────
     // UI
-    // ───────────────────────────────────────────────
     Scaffold(
         topBar = {
             TopAppBar(
